@@ -22,12 +22,7 @@ struct RegisterView: View {
         let calendar = Calendar.current
         return calendar.date(byAdding: .year, value: -25, to: Date()) ?? Date()
     }()
-    @State private var selectedLanguages: [myLanguage] = []
-    @State private var selectedHobbies: [Hobby] = []
     @State private var selectedRole: Role = .user
-    
-    @State private var avatarItem: PhotosPickerItem?
-    @State private var avatarImage: Image?
     
     // API integration states
     @State private var isLoading = false
@@ -89,7 +84,9 @@ struct RegisterView: View {
             
             Group{
                 SecureField("Password", text: $password)
+                    .textContentType(.oneTimeCode)
                 SecureField("Repeat Password", text: $cpassword)
+                    .textContentType(.oneTimeCode)
                 
                 if !cpassword.isEmpty && password != cpassword {
                     Text("Passwords don't match")
@@ -125,58 +122,6 @@ struct RegisterView: View {
                     }
                 }
                 .padding(.top, 4)
-            }
-            
-            // Simple Role Toggle
-            Section("Account Type") {
-                Picker("Role", selection: $selectedRole) {
-                    Text("User").tag(Role.user)
-                    Text("Mentor").tag(Role.mentor)
-                }
-                .pickerStyle(.segmented)
-            }
-            
-            VStack{
-                PhotosPicker("Select Profile Picture", selection: $avatarItem, matching: .images)
-                
-                avatarImage?.resizable()
-                    .frame(width: 300, height: 300)
-                    .scaledToFit()
-                    .cornerRadius(400)
-            }.task(id: avatarItem) {
-                avatarImage = try? await avatarItem?.loadTransferable(type: Image.self)
-            }
-            
-            DisclosureGroup("Hobbies: \(selectedHobbies.map (\.rawValue.capitalized).joined(separator: ", "))"){
-                ForEach(Hobby.allCases) { item in
-                    Toggle(isOn: Binding(
-                        get: {selectedHobbies.contains(item)},
-                        set: {isSelected in if isSelected{
-                            selectedHobbies.append(item)
-                        }else{
-                            selectedHobbies.removeAll { $0 == item }
-                        }
-                    }
-                    )){
-                        Text(item.rawValue.capitalized)
-                    }
-                }
-            }
-            
-            DisclosureGroup("Languages: \(selectedLanguages.map (\.rawValue.capitalized).joined(separator: ", "))"){
-                ForEach(myLanguage.allCases) { item in
-                    Toggle(isOn: Binding(
-                        get: {selectedLanguages.contains(item)},
-                        set: {isSelected in if isSelected{
-                            selectedLanguages.append(item)
-                        }else{
-                            selectedLanguages.removeAll { $0 == item }
-                        }
-                    }
-                    )){
-                        Text(item.rawValue.capitalized)
-                    }
-                }
             }
             
             // Debug section
@@ -270,10 +215,8 @@ struct RegisterView: View {
             profile = Profile.register(
                 _name: name,
                 _email: email,
-                _role: selectedRole, // Use selected role for local registration too
+                _role: selectedRole,
                 _birth_date: birth_date,
-                _hobbies: selectedHobbies,
-                _langauges: selectedLanguages
             )
             successMessage = "Account created locally"
             showingSuccess = true
@@ -285,13 +228,13 @@ struct RegisterView: View {
         
         Task {
             do {
-                print("🔄 Starting registration for: \(email)")
+                print("Starting registration for: \(email)")
                 
                 let registrationDTO = UserRegistrationDTO(
                     name: name,
                     email: email,
                     password: password,
-                    role: selectedRole, // Use the selected role
+                    role: selectedRole,
                     birth_date: birth_date
                 )
                 
@@ -301,14 +244,16 @@ struct RegisterView: View {
                     isLoading = false
                     
                     if authResponse.isSuccess, let user = authResponse.user {
-                        print("✅ Registration successful for user: \(user.name ?? "Unknown")")
+                        print("Registration successful for user: \(user.name ?? "Unknown")")
                         
-                        // Create profile from API response
+                        print("DEBUG: User ID from response: \(user.id?.uuidString ?? "NIL")")
+                        print("DEBUG: Selected role: \(selectedRole)")
+                        print("DEBUG: User role from response: \(user.role ?? "NIL")")
+                        
                         var newProfile = user.toProfile()
-                        newProfile.hobbies = selectedHobbies
-                        newProfile.languages = selectedLanguages
                         
                         profile = newProfile
+                        
                         successMessage = "Account created successfully! Welcome, \(user.name ?? "User")!"
                         showingSuccess = true
                         

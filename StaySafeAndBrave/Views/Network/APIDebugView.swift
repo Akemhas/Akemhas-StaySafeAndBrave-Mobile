@@ -9,168 +9,61 @@ import SwiftUI
 
 struct APIDebugView: View {
     @StateObject private var apiConfig = APIConfiguration.shared
-    @State private var showingHealthCheck = false
-    @State private var healthStatus: String = ""
+    @State private var testResult: String = ""
     
     var body: some View {
-        NavigationView {
-            Form {
-                Section("Current Environment") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: apiConfig.currentEnvironment.isSecure ? "lock.shield" : "network")
-                                .foregroundColor(apiConfig.currentEnvironment.isSecure ? .green : .orange)
-                            Text(apiConfig.currentEnvironment.rawValue)
-                                .font(.headline)
-                        }
-                        
-                        Text(apiConfig.currentEnvironment.baseURL)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Text(apiConfig.currentEnvironment.description)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+        VStack(spacing: 20) {
+            Text("API Debug")
+                .font(.title)
+                .padding()
+            
+            Text(apiConfig.debugInfo)
+                .font(.monospaced(.caption)())
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(8)
+            
+            VStack(spacing: 12) {
+                Button("Test Current Environment") {
+                    Task {
+                        let isReachable = await apiConfig.testCurrentEnvironment()
+                        testResult = isReachable ? "Reachable" : "Not Reachable"
                     }
-                    .padding(.vertical, 4)
                 }
+                .buttonStyle(.bordered)
                 
-                Section("Switch Environment") {
-                    ForEach(APIEnvironment.allCases, id: \.self) { environment in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(environment.rawValue)
-                                    .font(.subheadline)
-                                Text(environment.baseURL)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            if apiConfig.currentEnvironment == environment {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            apiConfig.switchTo(environment)
-                            apiConfig.saveEnvironment()
-                        }
+                Button("Auto-Detect Environment") {
+                    Task {
+                        await apiConfig.autoDetectEnvironment()
                     }
                 }
+                .buttonStyle(.bordered)
                 
-                Section("Health Check") {
-                    Button("Test Connection") {
-                        testConnection()
-                    }
-                    
-                    if !healthStatus.isEmpty {
-                        Text(healthStatus)
-                            .font(.caption)
-                            .foregroundColor(healthStatus.contains("✅") ? .green : .red)
+                Button("Find Available Environment") {
+                    Task {
+                        await apiConfig.switchToAvailableEnvironment()
                     }
                 }
-                
-                Section("Debug Actions") {
-                    Button("Auto-Detect Environment") {
-                        apiConfig.autoDetectEnvironment()
-                        apiConfig.saveEnvironment()
-                    }
-                    
-                    Button("Reset to Default") {
-                        #if DEBUG
-                        apiConfig.switchTo(.local)
-                        #else
-                        apiConfig.switchTo(.production)
-                        #endif
-                        apiConfig.saveEnvironment()
-                    }
-                }
-                
-                #if DEBUG
-                Section("Debug Info") {
-                    Text(apiConfig.debugInfo)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                #endif
+                .buttonStyle(.bordered)
             }
-            .navigationTitle("API Configuration")
-            .navigationBarTitleDisplayMode(.inline)
-            .onAppear {
-                apiConfig.loadSavedEnvironment()
+            
+            if !testResult.isEmpty {
+                Text(testResult)
+                    .padding()
             }
+            
+            Picker("Environment", selection: $apiConfig.currentEnvironment) {
+                ForEach(APIEnvironment.allCases, id: \.self) { env in
+                    Text(env.rawValue).tag(env)
+                }
+            }
+            .pickerStyle(MenuPickerStyle())
+            
+            Spacer()
         }
-    }
-    
-    private func testConnection() {
-        healthStatus = "Testing connection..."
-        
-        Task {
-            do {
-                // First try a simple health check
-                let url = apiConfig.baseURL
-                let request = URLRequest(url: url)
-                let (data, response) = try await URLSession.shared.data(for: request)
-                
-                if let httpResponse = response as? HTTPURLResponse {
-                    if httpResponse.statusCode == 200 {
-                        await MainActor.run {
-                            healthStatus = "✅ Base URL accessible (Status: \(httpResponse.statusCode))"
-                        }
-                        
-                        // Now try mentors endpoint
-                        try await testMentorsEndpoint()
-                    } else {
-                        await MainActor.run {
-                            let responseString = String(data: data, encoding: .utf8) ?? "No response data"
-                            healthStatus = "❌ Base URL returned \(httpResponse.statusCode): \(responseString)"
-                        }
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    healthStatus = "❌ Connection failed: \(error.localizedDescription)"
-                }
-            }
-        }
-    }
-    
-    private func testMentorsEndpoint() async throws {
-        do {
-            let mentors = try await MentorAPIService.shared.fetchMentors()
-            await MainActor.run {
-                healthStatus = "✅ Full API working! Found \(mentors.count) mentors"
-            }
-        } catch {
-            await MainActor.run {
-                healthStatus = "❌ Mentors endpoint failed: \(error.localizedDescription)"
-            }
-        }
+        .padding()
     }
 }
-
-// MARK: - Quick Access Button for Debug Builds
-
-#if DEBUG
-struct APIDebugButton: View {
-    @State private var showingDebugView = false
-    
-    var body: some View {
-        Button {
-            showingDebugView = true
-        } label: {
-            Image(systemName: "gear.badge")
-                .foregroundColor(.blue)
-        }
-        .sheet(isPresented: $showingDebugView) {
-            APIDebugView()
-        }
-    }
-}
-#endif
 
 #Preview {
     APIDebugView()

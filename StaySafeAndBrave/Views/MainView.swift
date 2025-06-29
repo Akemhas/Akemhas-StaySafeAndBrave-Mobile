@@ -24,7 +24,42 @@ struct MainView: View {
                 switch activeTab {
                 case .search: SearchView(mentorViewModel: $mentorViewModel, profile: $profile, activeTab: $activeTab)
                 case .chat: ChatView()
-                case .booking: BookingView()
+                case .booking:
+                    if profile != Profile.empty {
+                        BookingView(profile: profile)
+                    } else {
+                        VStack {
+                            Spacer()
+                            
+                            VStack(spacing: 20) {
+                                Image(systemName: "person.badge.key")
+                                    .font(.system(size: 60))
+                                    .foregroundColor(.gray)
+                                
+                                Text("Login Required")
+                                    .font(.title2)
+                                    .fontWeight(.semibold)
+                                
+                                Text("Please log in to view your bookings")
+                                    .font(.body)
+                                    .foregroundColor(.gray)
+                                    .multilineTextAlignment(.center)
+                                
+                                Button("Go to Profile") {
+                                    activeTab = .profile
+                                }
+                                .padding(.horizontal, 30)
+                                .padding(.vertical, 12)
+                                .background(Color.teal)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                            }
+                            
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(.systemBackground))
+                    }
                 case .diary: DiaryView()
                 case .profile: ProfileView(activeTab: $activeTab, profile: $profile)
                 }
@@ -37,56 +72,6 @@ struct MainView: View {
                     activeTab = newTab
                 }
             }
-            
-            // Debug overlay in top-right corner (only in DEBUG builds)
-            #if DEBUG
-            VStack {
-                HStack {
-                    Spacer()
-                    
-                    VStack(alignment: .trailing, spacing: 8) {
-                        // API Environment indicator
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(apiConfig.currentEnvironment.isSecure ? .green : .orange)
-                                .frame(width: 6, height: 6)
-                            Text(apiConfig.currentEnvironment.rawValue)
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(.regularMaterial)
-                        .cornerRadius(12)
-                        
-                        // Debug button
-                        Button {
-                            showingAPIDebug = true
-                        } label: {
-                            Image(systemName: "gear.badge")
-                                .font(.title2)
-                                .foregroundColor(.blue)
-                                .padding(8)
-                                .background(.regularMaterial)
-                                .cornerRadius(20)
-                        }
-                    }
-                    .padding(.trailing, 16)
-                }
-                .padding(.top, 50) // Account for status bar
-                
-                Spacer()
-            }
-            .sheet(isPresented: $showingAPIDebug) {
-                APIDebugView()
-            }
-            #endif
-        }
-        .onAppear {
-            #if DEBUG
-            // Load saved API environment on app start
-            apiConfig.loadSavedEnvironment()
-            #endif
         }
     }
 }

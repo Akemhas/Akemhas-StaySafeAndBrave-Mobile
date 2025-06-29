@@ -17,7 +17,7 @@ class UserAPIService: BaseAPIService {
     private struct Endpoints {
         static let register = "/users/register"
         static let login = "/users/login"
-        static let users = "/users"
+        static let users = "/users/json"
         static func user(id: UUID) -> String {
             return "/users/\(id.uuidString)"
         }

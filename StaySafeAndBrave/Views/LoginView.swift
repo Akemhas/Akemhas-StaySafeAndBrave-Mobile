@@ -61,7 +61,7 @@ struct LoginView: View {
             
             Button{
                 // Keep the test mentor login for development
-                if email == "mentor" {
+                if email == "mentor@mail.com" {
                     profile = Profile.testMentor
                     dismiss()
                 } else {
@@ -92,7 +92,7 @@ struct LoginView: View {
             .disabled(!isValid || isLoading)
             
             // Test login hint
-            Text("Tip: Enter 'mentor' as email for test mentor login")
+            Text("Tip: Enter 'mentor@mail.com' as email for test mentor login")
                 .font(.caption)
                 .foregroundColor(.gray)
                 .padding(.top, 8)

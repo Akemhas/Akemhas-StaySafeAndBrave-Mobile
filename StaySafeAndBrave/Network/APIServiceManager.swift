@@ -16,7 +16,7 @@ class APIServiceManager {
     
     let mentors = MentorAPIService.shared
     let users = UserAPIService.shared
-    // let bookings = BookingAPIService.shared
+    let bookings = BookingAPIService.shared
     // let auth = AuthAPIService.shared
     
     private init() {}
@@ -46,12 +46,12 @@ class APIServiceManager {
 /*
 // In your ViewModels, you can use it like this:
 
-class MentorViewModel: ObservableObject {
+class BookingViewModel: ObservableObject {
     private let apiManager = APIServiceManager.shared
     
-    func fetchMentors() async {
+    func fetchUserBookings(userID: UUID) async {
         do {
-            let mentors = try await apiManager.mentors.fetchMentors()
+            let bookings = try await apiManager.bookings.fetchUserBookings(userID: userID)
             // Handle success
         } catch {
             // Handle error
@@ -60,8 +60,8 @@ class MentorViewModel: ObservableObject {
 }
 
 // Or access services directly:
-let mentorService = APIServiceManager.shared.mentors
-let mentors = try await mentorService.fetchMentors()
+let bookingService = APIServiceManager.shared.bookings
+let bookings = try await bookingService.fetchUserBookings(userID: userID)
 
 // Check server connectivity:
 let isServerUp = await APIServiceManager.shared.checkServerHealth()

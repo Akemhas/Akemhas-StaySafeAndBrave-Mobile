@@ -3,19 +3,14 @@
 //  StaySafeAndBrave
 //
 //  Created by Sarmiento Castrillon, Clein Alexander on 14.05.25.
-//
 
 import SwiftUI
 import SwiftData
 
 struct SearchView: View {
     @Environment(\.modelContext) private var modelContext
-    // added here
-    @Query(sort: \Mentor.score) var mentors: [Mentor]
     @State private var searchText: String = ""
-    @State private var sortOrder = SortDescriptor(\Mentor.location_for_sorting, order: .forward) // This tracks the sort order: sort by name by default
-    
-    
+    @State private var sortOrder = SortDescriptor(\Mentor.location_for_sorting, order: .forward)
     @State private var showingFilterOptions = false
     
     // Filter States
@@ -24,75 +19,67 @@ struct SearchView: View {
     @State private var minScore: Float = 0.0
     @State private var maxScore: Float = 5.0
     
-    //API sync
+    // API sync
     @Binding var mentorViewModel: MentorViewModel
-    
     @Binding var profile: Profile
     @Binding var activeTab: BottomNavBar.ActiveTab
     
     var body: some View {
         NavigationStack {
-            VStack( spacing:0) {
-                SearchBar(searchText: $searchText,
-                          placeholder: "Search Mentor...",
-                          onFilter: openFilterOptions,
-                          onSearch: applySearch,
-                          onAddDummies: addMentors,
+            VStack(spacing: 0) {
+                SearchBar(
+                    searchText: $searchText,
+                    placeholder: "Search Mentor...",
+                    onFilter: openFilterOptions,
+                    onSearch: applySearch,
+                    onAddDummies: refreshMentors
                 )
-                HStack(spacing: 0){
-                    MentorListView(sort: sortOrder,
-                                   searchText: searchText,
-                                   selectedCity: selectedCity,
-                                   selectedLanguage: selectedLanguage,
-                                   minScore: minScore,
-                                   maxScore: maxScore,
-                    profile: $profile,
-                                   activeTab: $activeTab)
-                    .background(Color(.systemBackground))
-                    
-                    
-                }
                 
-            }.padding(.bottom)
-            
-            
-        }.onAppear(perform: setupMentorViewModel)
-        .sheet(isPresented: $showingFilterOptions){
+                HStack(spacing: 0) {
+                    MentorListView(
+                        sort: sortOrder,
+                        searchText: searchText,
+                        selectedCity: selectedCity,
+                        selectedLanguage: selectedLanguage,
+                        minScore: minScore,
+                        maxScore: maxScore,
+                        profile: $profile,
+                        activeTab: $activeTab
+                    )
+                    .background(Color(.systemBackground))
+                }
+            }
+            .padding(.bottom)
+        }
+        .onAppear(perform: setupMentorViewModel)
+        .sheet(isPresented: $showingFilterOptions) {
             filterOptionsView
         }
-        
+        .refreshable {
+            await refreshMentorsFromAPI()
+        }
     }
     
-    
-    func openFilterOptions(){
+    func openFilterOptions() {
         showingFilterOptions = true
     }
     
-    func applySearch(){
-        withAnimation{
-            for mentor in mentors{
-                modelContext.delete(mentor)
-            }
+    func applySearch() {
+        // Search is handled by MentorListView filtering
+        // No need to delete local data
+    }
+    
+    func refreshMentors() {
+        Task {
+            await refreshMentorsFromAPI()
         }
     }
     
-    
-    
-    func addMentors(){
-        /*
-        modelContext.insert(createMentorTil())
-        modelContext.insert(createMentorLaura())
-        modelContext.insert(createMentorZinhle())
-        modelContext.insert(createMentorLindi())
-        modelContext.insert(createMentorElsabe())
-        modelContext.insert(createMentorLeonie())
-        modelContext.insert(createMentorPeter())
-        modelContext.insert(createMentorSabubona())*/
-        setupMentorViewModel()
+    private func refreshMentorsFromAPI() async {
+        await mentorViewModel.fetchMentors()
     }
     
-    
-    //MARK: Filter options
+    // MARK: Filter options
     private var filterOptionsView: some View {
         Form {
             Section("Location") {
@@ -134,11 +121,12 @@ struct SearchView: View {
                 }
                 .foregroundColor(.red)
             }
+            
             // MARK: Sort options in filter
             Section("Sort By") {
                 Picker("Sort Options", selection: $sortOrder) {
                     Text("Name ascending").tag(SortDescriptor(\Mentor.name, order: .forward))
-                    Text("Name descenging").tag(SortDescriptor(\Mentor.name, order: .reverse))
+                    Text("Name descending").tag(SortDescriptor(\Mentor.name, order: .reverse))
                     Text("Score ascending").tag(SortDescriptor(\Mentor.score, order: .forward))
                     Text("Score descending").tag(SortDescriptor(\Mentor.score, order: .reverse))
                     Text("Age ascending").tag(SortDescriptor(\Mentor.birth_date, order: .reverse))
@@ -151,20 +139,20 @@ struct SearchView: View {
             Button("Done") {
                 showingFilterOptions = false
             }
-            
         }
     }
     
-    //MARK: API Synchornization
-    private func setupMentorViewModel(){
+    // MARK: API Synchronization
+    private func setupMentorViewModel() {
         mentorViewModel.onAppear(modelContext: modelContext)
     }
 }
 
 #Preview {
-    //let mentorViewModel = MentorViewModel()
-    SearchView(mentorViewModel:.constant(.init()), profile: .constant(Profile.testMentor), activeTab: .constant(.search))
-        .modelContainer(for: Mentor.self, inMemory: true)
+    SearchView(
+        mentorViewModel: .constant(.init()),
+        profile: .constant(Profile.testMentor),
+        activeTab: .constant(.search)
+    )
+    .modelContainer(for: Mentor.self, inMemory: true)
 }
-
-

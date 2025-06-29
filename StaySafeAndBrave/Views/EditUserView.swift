@@ -18,7 +18,7 @@ struct EditUserView: View {
     @State private var password: String = ""
     @State private var cpassword: String = ""
     @State private var birth_date: Date = Date()
-    @State private var selectedLangauges: [myLanguage] = []
+    @State private var selectedLangauges: [AvailableLanguage] = []
     @State private var selectedHobbies: [Hobby] = []
     
     @State private var city: City?
@@ -54,6 +54,8 @@ struct EditUserView: View {
                     text: $email,
                 )
                 .textContentType(.emailAddress)
+                .disabled(true)
+                .foregroundColor(.secondary)
             }
             .textInputAutocapitalization(.never)
             .disableAutocorrection(true)
@@ -66,50 +68,51 @@ struct EditUserView: View {
                 )
                 .datePickerStyle(WheelDatePickerStyle())
             }
-            VStack{
-                PhotosPicker("Select Profile Picture", selection: $avatarItem, matching: .images)
-                
-                avatarImage?.resizable()
-                    .frame(width: 300, height: 300)
-                    .scaledToFit()
-                    .cornerRadius(400)
-            }.task(id: avatarItem) {
-                avatarImage = try? await avatarItem?.loadTransferable(type: Image.self)
-            }
-            
-            DisclosureGroup("Hobbies: \(selectedHobbies.map (\.rawValue.capitalized).joined(separator: ", "))"){
-                ForEach(Hobby.allCases) { item in
-                    Toggle(isOn: Binding(
-                        get: {selectedHobbies.contains(item)},
-                        set: {isSelected in if isSelected{
-                            selectedHobbies.append(item)
-                        }else{
-                            selectedHobbies.removeAll { $0 == item }
-                        }
-                    }
-                    )){
-                        Text(item.rawValue.capitalized)
-                    }
-                }
-            }
-            
-            DisclosureGroup("Languages: \(selectedLangauges.map (\.rawValue.capitalized).joined(separator: ", "))"){
-                ForEach(myLanguage.allCases) { item in
-                    Toggle(isOn: Binding(
-                        get: {selectedLangauges.contains(item)},
-                        set: {isSelected in if isSelected{
-                            selectedLangauges.append(item)
-                        }else{
-                            selectedLangauges.removeAll { $0 == item }
-                        }
-                    }
-                    )){
-                        Text(item.rawValue.capitalized)
-                    }
-                }
-            }
             
             if profile.role == .mentor{
+                VStack{
+                    PhotosPicker("Select Profile Picture", selection: $avatarItem, matching: .images)
+                    
+                    avatarImage?.resizable()
+                        .frame(width: 300, height: 300)
+                        .scaledToFit()
+                        .cornerRadius(400)
+                }.task(id: avatarItem) {
+                    avatarImage = try? await avatarItem?.loadTransferable(type: Image.self)
+                }
+                
+                DisclosureGroup("Hobbies: \(selectedHobbies.map (\.rawValue.capitalized).joined(separator: ", "))"){
+                    ForEach(Hobby.allCases) { item in
+                        Toggle(isOn: Binding(
+                            get: {selectedHobbies.contains(item)},
+                            set: {isSelected in if isSelected{
+                                selectedHobbies.append(item)
+                            }else{
+                                selectedHobbies.removeAll { $0 == item }
+                            }
+                        }
+                        )){
+                            Text(item.rawValue.capitalized)
+                        }
+                    }
+                }
+                
+                DisclosureGroup("Languages: \(selectedLangauges.map (\.rawValue.capitalized).joined(separator: ", "))"){
+                    ForEach(AvailableLanguage.allCases) { item in
+                        Toggle(isOn: Binding(
+                            get: {selectedLangauges.contains(item)},
+                            set: {isSelected in if isSelected{
+                                selectedLangauges.append(item)
+                            }else{
+                                selectedLangauges.removeAll { $0 == item }
+                            }
+                        }
+                        )){
+                            Text(item.rawValue.capitalized)
+                        }
+                    }
+                }
+                
                 Picker(selection: $city, label: Text("City:")) {
                     ForEach(City.allCases){ city in
                         Text("\(city.description)").tag(city)
@@ -122,7 +125,7 @@ struct EditUserView: View {
             }
             
             Button{
-                profile = Profile.updateUser(_user_id: profile.user_id, _name: name, _email: email, _role: profile.role!, _birth_date: birth_date, _hobbies: selectedHobbies, _langauges: selectedLangauges, _city: city!, _bio: bio, _rating: profile.rating!)
+                profile = Profile.updateUser(_user_id: profile.user_id, _name: name, _email: email, _role: profile.role!, _birth_date: birth_date)
                 dismiss()
             }
             label:{

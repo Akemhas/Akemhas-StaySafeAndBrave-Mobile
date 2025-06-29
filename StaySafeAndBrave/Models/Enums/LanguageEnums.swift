@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum AvailableLanguage: String, Codable, Identifiable, CaseIterable {
+enum AvailableLanguage: String, Codable, Identifiable, CaseIterable, CustomStringConvertible {
     case english
     case spanish
     case french
@@ -23,17 +23,20 @@ enum AvailableLanguage: String, Codable, Identifiable, CaseIterable {
     case afrikaans
     case ndebele
     case xhosa
-    case zulu 
+    case zulu
     case sepedi
     case sesotho
     case setswana
     case swati
     case tshivenda
-    case xitsonga 
-    // Add more languages as needed
+    case xitsonga
     
     var id: String {
         return self.rawValue
+    }
+    
+    var description: String {
+        return rawValue.capitalized
     }
 }
 
@@ -49,4 +52,3 @@ struct Language: Codable, Identifiable {
     var name: AvailableLanguage
     var level: ProficiencyLevel
 }
-

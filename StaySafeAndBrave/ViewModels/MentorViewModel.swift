@@ -3,7 +3,6 @@
 //  StaySafeAndBrave
 //
 //  Created by Sarmiento Castrillon, Clein Alexander on 18.06.25.
-//
 
 import SwiftUI
 import SwiftData
@@ -14,7 +13,6 @@ final class MentorViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    // Use the new MentorAPIService instead of old APIService
     private let mentorAPIService = MentorAPIService.shared
     
     func onAppear(modelContext: ModelContext) {
@@ -32,35 +30,33 @@ final class MentorViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            print("🔄 Starting to fetch mentors...")
+            print("Starting to fetch mentors...")
             
-            // Use the new API service with proper DTOs
             let remoteMentors = try await mentorAPIService.fetchMentors()
             
-            print("✅ Successfully fetched \(remoteMentors.count) mentors from API")
+            print("Successfully fetched \(remoteMentors.count) mentors from API")
             
-            // Clear existing mentors first (optional - depends on your sync strategy)
+            // Clear existing mentors first
             try context.delete(model: Mentor.self)
             
-            // Convert DTOs to local models using the new conversion method
             for data in remoteMentors {
-                let mentor = data.toMentorModel() // Uses the new conversion extension
+                let mentor = data.toMentorModel()
                 context.insert(mentor)
-                print("💾 Inserted mentor: \(mentor.name)")
+                print("Inserted mentor: \(mentor.name)")
             }
             
             try context.save()
-            print("✅ Successfully saved \(remoteMentors.count) mentors to local database")
+            print("Successfully saved \(remoteMentors.count) mentors to local database")
             
             isLoading = false
         } catch {
             isLoading = false
             errorMessage = "Error fetching mentors: \(error.localizedDescription)"
-            print("❌ Error fetching mentors: \(error)")
+            print("Error fetching mentors: \(error)")
             
             // If it's an API error, show more detailed info
             if let apiError = error as? APIError {
-                print("❌ API Error details: \(apiError.errorDescription ?? "Unknown")")
+                print("API Error details: \(apiError.errorDescription ?? "Unknown")")
                 errorMessage = apiError.errorDescription
             }
         }
@@ -74,7 +70,7 @@ final class MentorViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            print("🔄 Fetching mentor with ID: \(id)")
+            print("Fetching mentor with ID: \(id)")
             
             let dto = try await mentorAPIService.fetchMentor(id: id)
             let mentor = dto.toMentorModel()
@@ -82,12 +78,12 @@ final class MentorViewModel: ObservableObject {
             context.insert(mentor)
             try context.save()
             
-            print("✅ Successfully fetched and saved mentor: \(mentor.name)")
+            print("Successfully fetched and saved mentor: \(mentor.name)")
             isLoading = false
         } catch {
             isLoading = false
             errorMessage = "Error fetching mentor: \(error.localizedDescription)"
-            print("❌ Error fetching mentor: \(error)")
+            print("Error fetching mentor: \(error)")
             
             if let apiError = error as? APIError {
                 errorMessage = apiError.errorDescription
@@ -97,9 +93,9 @@ final class MentorViewModel: ObservableObject {
     
     // MARK: - Create mentor
     func createMentor(userID: UUID, name: String, profile_image: String? = nil,
-                     score: Float? = nil, birth_date: Date, bio: String? = nil,
-                     languages: [AvailableLanguage]? = nil, hobbies: [Hobby]? = nil,
-                     location: City? = nil) async {
+                      score: Float? = nil, birth_date: Date, bio: String? = nil,
+                      languages: [AvailableLanguage]? = nil, hobbies: [Hobby]? = nil,
+                      location: City? = nil) async {
         guard let context = modelContext else { return }
         
         isLoading = true
@@ -127,12 +123,12 @@ final class MentorViewModel: ObservableObject {
             context.insert(mentor)
             try context.save()
             
-            print("✅ Successfully created mentor: \(mentor.name)")
+            print("Successfully created mentor: \(mentor.name)")
             isLoading = false
         } catch {
             isLoading = false
             errorMessage = "Error creating mentor: \(error.localizedDescription)"
-            print("❌ Error creating mentor: \(error)")
+            print("Error creating mentor: \(error)")
             
             if let apiError = error as? APIError {
                 errorMessage = apiError.errorDescription
@@ -142,9 +138,9 @@ final class MentorViewModel: ObservableObject {
     
     // MARK: - Update mentor
     func updateMentor(mentor: Mentor, name: String? = nil, profile_image: String? = nil,
-                     score: Float? = nil, birth_date: Date? = nil, bio: String? = nil,
-                     languages: [AvailableLanguage]? = nil, hobbies: [Hobby]? = nil,
-                     location: City? = nil) async {
+                      score: Float? = nil, birth_date: Date? = nil, bio: String? = nil,
+                      languages: [AvailableLanguage]? = nil, hobbies: [Hobby]? = nil,
+                      location: City? = nil) async {
         guard let context = modelContext else { return }
         
         isLoading = true
@@ -162,7 +158,7 @@ final class MentorViewModel: ObservableObject {
         )
         
         do {
-            print("🔄 Updating mentor: \(mentor.name)")
+            print("Updating mentor: \(mentor.name)")
             
             let updatedData = try await mentorAPIService.updateMentor(id: mentor.id, data: updateDTO)
             
@@ -182,12 +178,12 @@ final class MentorViewModel: ObservableObject {
             
             try context.save()
             
-            print("✅ Successfully updated mentor: \(mentor.name)")
+            print("Successfully updated mentor: \(mentor.name)")
             isLoading = false
         } catch {
             isLoading = false
             errorMessage = "Error updating mentor: \(error.localizedDescription)"
-            print("❌ Error updating mentor: \(error)")
+            print("Error updating mentor: \(error)")
             
             if let apiError = error as? APIError {
                 errorMessage = apiError.errorDescription
@@ -203,18 +199,18 @@ final class MentorViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            print("🔄 Deleting mentor: \(mentor.name)")
+            print("Deleting mentor: \(mentor.name)")
             
             try await mentorAPIService.deleteMentor(id: mentor.id)
             context.delete(mentor)
             try context.save()
             
-            print("✅ Successfully deleted mentor: \(mentor.name)")
+            print("Successfully deleted mentor: \(mentor.name)")
             isLoading = false
         } catch {
             isLoading = false
             errorMessage = "Error deleting mentor: \(error.localizedDescription)"
-            print("❌ Error deleting mentor: \(error)")
+            print("Error deleting mentor: \(error)")
             
             if let apiError = error as? APIError {
                 errorMessage = apiError.errorDescription
@@ -222,25 +218,11 @@ final class MentorViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Refresh mentors (useful for pull-to-refresh)
+    // MARK: - Refresh mentors (For Pull-to-Refresh)
     func refreshMentors() async {
         await fetchMentors()
     }
     
-    // MARK: - Convenience method to create mentor from existing Mentor model
-    func syncMentorToBackend(mentor: Mentor, userID: UUID) async {
-        let createDTO = mentor.toCreateDTO(userID: userID)
-        
-        do {
-            let _ = try await mentorAPIService.createMentor(data: createDTO)
-            print("✅ Successfully synced mentor to backend: \(mentor.name)")
-        } catch {
-            print("❌ Error syncing mentor to backend: \(error)")
-            errorMessage = "Error syncing mentor: \(error.localizedDescription)"
-        }
-    }
-    
-    // MARK: - Clear error message
     func clearErrorMessage() {
         errorMessage = nil
     }
