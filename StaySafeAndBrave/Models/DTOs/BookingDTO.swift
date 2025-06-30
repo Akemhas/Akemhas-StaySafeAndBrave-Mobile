@@ -3,28 +3,33 @@
 //  StaySafeAndBrave
 //
 //  Created by Akif Emre Bozdemir on 6/28/25.
-//
 
 import Foundation
 
 // MARK: - Response DTO
 
-/// Response DTO that matches your backend BookingDTO
-/// This is what the backend sends to the frontend
 struct BookingResponseDTO: Codable {
     var id: UUID?
     var userID: UUID?
     var mentorID: UUID?
-    var date: Date?
+    var date: String?
     var status: String?
     var description: String?
     
     // MARK: - Computed Properties
     
+    /// Convert string date to Date object
+    var dateAsDate: Date? {
+        guard let dateString = date else { return nil }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd/MM/yyyy"
+        return formatter.date(from: dateString)
+    }
+    
     /// Convert date to display string
     var dateDisplay: String? {
-        guard let date = date else { return nil }
-        return date.displayString
+        guard let dateObj = dateAsDate else { return date }
+        return dateObj.displayString
     }
     
     /// Get status display with proper capitalization
@@ -51,7 +56,6 @@ struct BookingResponseDTO: Codable {
 // MARK: - Create DTO
 
 /// Create DTO for creating new bookings
-/// This is what the frontend sends to the backend when creating a booking
 struct BookingCreateDTO: Codable {
     var userID: UUID
     var mentorID: UUID
@@ -75,7 +79,6 @@ struct BookingCreateDTO: Codable {
         self.description = description
     }
     
-    // Custom encoding to match backend date format expectations
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(userID, forKey: .userID)
@@ -83,7 +86,6 @@ struct BookingCreateDTO: Codable {
         try container.encode(status, forKey: .status)
         try container.encode(description, forKey: .description)
         
-        // Encode date in the format the backend expects
         let formatter = DateFormatter()
         formatter.dateFormat = "dd/MM/yyyy"
         let dateString = formatter.string(from: date)
@@ -91,8 +93,8 @@ struct BookingCreateDTO: Codable {
     }
     
     enum CodingKeys: String, CodingKey {
-        case userID = "user"
-        case mentorID = "mentor"
+        case userID = "userID"
+        case mentorID = "mentorID"
         case date
         case status
         case description
@@ -102,7 +104,6 @@ struct BookingCreateDTO: Codable {
 // MARK: - Update DTO
 
 /// Update DTO for updating existing bookings
-/// This is what the frontend sends to the backend when updating a booking
 struct BookingUpdateDTO: Codable {
     var mentorID: UUID?
     var date: Date?
@@ -119,13 +120,11 @@ struct BookingUpdateDTO: Codable {
         self.status = status
     }
     
-    // Custom encoding to match backend date format expectations
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encodeIfPresent(mentorID, forKey: .mentorID)
         try container.encodeIfPresent(status, forKey: .status)
         
-        // Encode date in the format the backend expects if provided
         if let date = date {
             let formatter = DateFormatter()
             formatter.dateFormat = "dd/MM/yyyy"
@@ -135,7 +134,7 @@ struct BookingUpdateDTO: Codable {
     }
     
     enum CodingKeys: String, CodingKey {
-        case mentorID = "mentor"
+        case mentorID = "mentorID"
         case date
         case status
     }
@@ -148,7 +147,7 @@ extension BookingResponseDTO {
     func toBookingModel(user: User, mentor: User, package: Package) -> Booking {
         return Booking(
             booking_id: self.id ?? UUID(),
-            date: self.date ?? Date(),
+            date: self.dateAsDate ?? Date(),
             status: self.status ?? "pending",
             user: user,
             mentor: mentor,
@@ -204,7 +203,6 @@ extension BookingCreateDTO {
 }
 
 extension BookingUpdateDTO {
-    /// Check if the update DTO has any fields to update
     var hasUpdates: Bool {
         return mentorID != nil || date != nil || status != nil
     }

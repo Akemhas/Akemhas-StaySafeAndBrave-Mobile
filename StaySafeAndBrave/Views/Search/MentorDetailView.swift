@@ -36,55 +36,65 @@ struct MentorDetailView: View {
                 Spacer().frame(height: 100)
             }
             
-            HStack(alignment: .lastTextBaseline){
+            VStack {
                 Spacer()
-                // Button
-                if profile != Profile.empty {
-                    Button(action: toBookingView){
-                        HStack{
-                            ZStack{
-                                Circle()
-                                    .frame(width:130, height: 130)
-                                    .foregroundStyle(.teal)
+                
+                HStack {
+                    Spacer()
+                    
+                    if profile != Profile.empty {
+                        Button(action: toBookingView) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "calendar.badge.plus")
+                                    .font(.title2)
+                                    .fontWeight(.semibold)
                                 
-                                HStack{
-                                    SFSymbol.booking
-                                        .font(.largeTitle)
-                                        .padding(.leading)
-                                    Text("Book")
-                                        .padding(.trailing)
-                                        .font(.headline)
-                                }
-                                .foregroundStyle(.white)
-                            }.padding(.horizontal, 30)
+                                Text("Book Mentor")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 16)
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.teal, Color.teal.opacity(0.9)]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .cornerRadius(25)
+                            .shadow(color: Color.teal.opacity(0.3), radius: 8, x: 0, y: 4)
+                            .scaleEffect(isBooking ? 0.95 : 1.0)
+                            .opacity(isBooking ? 0.7 : 1.0)
+                            .animation(.easeInOut(duration: 0.1), value: isBooking)
                         }
-                    }.frame(width: 100, height: 100)
-                        .padding(.trailing)
                         .disabled(isBooking)
-                } else {
-                    Button(action: toProfile){
-                        HStack{
-                            ZStack{
-                                Circle()
-                                    .frame(width:130, height: 130)
-                                    .foregroundStyle(.teal)
+                        .padding(.trailing, 20)
+                        
+                    } else {
+                        Button(action: toProfile) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "person.badge.key")
+                                    .font(.title3)
+                                    .fontWeight(.medium)
                                 
-                                HStack{
-                                    SFSymbol.booking
-                                        .font(.largeTitle)
-                                        .padding(.leading)
-                                    Text("Log in to Book")
-                                        .padding(.trailing)
-                                        .font(.headline)
-                                }
-                                .foregroundStyle(.white)
-                            }.padding(.horizontal, 30)
+                                Text("Login to Book")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(Color.gray)
+                            .cornerRadius(20)
+                            .shadow(color: Color.gray.opacity(0.8), radius: 6, x: 0, y: 3)
                         }
-                    }.frame(width: 100, height: 100)
-                        .padding(.trailing)
+                        .padding(.trailing, 20)
+                    }
                 }
-            }.padding(.bottom, 75)
-                .padding(.trailing,5)
+            }
+            .padding(.bottom, 90)
         }
         .sheet(isPresented: $showingBookingRequest){
             bookingRequestView

@@ -14,6 +14,8 @@ final class BookingViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var bookings: [BookingResponseDTO] = []
     
+    @Published private var currentTask: Task<Void, Never>?
+    
     // Use the BookingAPIService
     private let bookingAPIService = BookingAPIService.shared
     
@@ -23,30 +25,41 @@ final class BookingViewModel: ObservableObject {
     
     // MARK: - Fetch user bookings
     func fetchUserBookings(userID: UUID) async {
-        isLoading = true
-        errorMessage = nil
-        
-        do {
-            print("Starting to fetch bookings for user: \(userID)")
-            
-            let fetchedBookings = try await bookingAPIService.fetchUserBookings(userID: userID)
-            
-            print("Successfully fetched \(fetchedBookings.count) bookings from API")
-            
-            bookings = fetchedBookings
-            isLoading = false
-        } catch {
-            isLoading = false
-            errorMessage = "Error fetching bookings: \(error.localizedDescription)"
-            print("Error fetching bookings: \(error)")
-            
-            // If it's an API error, show more detailed info
-            if let apiError = error as? APIError {
-                print("API Error details: \(apiError.errorDescription ?? "Unknown")")
-                errorMessage = apiError.errorDescription
-            }
-        }
-    }
+          // Cancel any existing request
+          currentTask?.cancel()
+          
+          currentTask = Task {
+              isLoading = true
+              errorMessage = nil
+              
+              do {
+                  print("Starting to fetch bookings for user: \(userID)")
+                  
+                  let fetchedBookings = try await bookingAPIService.fetchUserBookings(userID: userID)
+                  
+                  // Check if task was cancelled
+                  guard !Task.isCancelled else { return }
+                  
+                  print("Successfully fetched \(fetchedBookings.count) bookings from API")
+                  
+                  bookings = fetchedBookings
+                  isLoading = false
+              } catch {
+                  guard !Task.isCancelled else { return }
+                  
+                  isLoading = false
+                  errorMessage = "Error fetching bookings: \(error.localizedDescription)"
+                  print("Error fetching bookings: \(error)")
+                  
+                  if let apiError = error as? APIError {
+                      print("API Error details: \(apiError.errorDescription ?? "Unknown")")
+                      errorMessage = apiError.errorDescription
+                  }
+              }
+          }
+          
+          await currentTask?.value
+      }
     
     // MARK: - Create booking
     func createBooking(userID: UUID, mentorID: UUID, date: Date, description: String? = nil) async -> Bool {
