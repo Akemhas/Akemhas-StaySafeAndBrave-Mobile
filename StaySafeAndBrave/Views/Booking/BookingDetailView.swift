@@ -11,6 +11,8 @@ import SwiftData
 struct BookingDetailView: View {
     let booking: BookingResponseDTO
     var onDismiss: (() -> Void)? = nil
+    @StateObject private var bookingViewModel = BookingViewModel()
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     
@@ -19,8 +21,6 @@ struct BookingDetailView: View {
     @State private var isUpdating = false
     @State private var showingErrorAlert = false
     @State private var errorMessage: String?
-    
-    @StateObject private var bookingViewModel = BookingViewModel()
     
     // Reschedule states
     @State private var newDate = Date()

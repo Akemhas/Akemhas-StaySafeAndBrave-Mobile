@@ -253,6 +253,7 @@ struct RegisterView: View {
                         let newProfile = user.toProfile()
                         
                         profile = newProfile
+                        // Profile will be automatically saved due to onChange in MainView
                         
                         successMessage = "Account created successfully! Welcome, \(user.name ?? "User")!"
                         showingSuccess = true

@@ -60,9 +60,10 @@ struct LoginView: View {
                 .padding(.horizontal)
             
             Button{
-                // Keep the test mentor login for development
                 if email == "mentor@mail.com" {
-                    profile = Profile.testMentor
+                    let testProfile = Profile.testMentor
+                    profile = testProfile
+                    testProfile.save()
                     dismiss()
                 } else {
                     loginUser()
@@ -91,7 +92,6 @@ struct LoginView: View {
             }
             .disabled(!isValid || isLoading)
             
-            // Test login hint
             Text("Tip: Enter 'mentor@mail.com' as email for test mentor login")
                 .font(.caption)
                 .foregroundColor(.gray)
@@ -132,11 +132,12 @@ struct LoginView: View {
                     
                     await MainActor.run {
                         profile = newProfile
+                        // Profile will be automatically saved due to onChange in MainView
                         isLoading = false
                         dismiss()
                     }
                     
-                    print("✅ Successfully logged in user: \(user.name ?? "Unknown")")
+                    print("Successfully logged in user: \(user.name ?? "Unknown")")
                 } else {
                     await MainActor.run {
                         isLoading = false
@@ -154,7 +155,7 @@ struct LoginView: View {
                         errorMessage = error.localizedDescription
                     }
                     showingError = true
-                    print("❌ Login failed: \(error)")
+                    print("Login failed: \(error)")
                 }
             }
         }

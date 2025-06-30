@@ -15,7 +15,7 @@ struct Profile: Equatable {
     var birth_date: Date?
     var hobbies: [Hobby]? = []
     var languages: [AvailableLanguage]? = []
-    var image: String? = sampleImagesURL.nomusaURL.rawValue
+    var image: String? = sampleImagesURL.peterURL.rawValue
     var city: City? = City.dortmund
     var bio: String? = ""
     var rating: Float? = 0.0
@@ -37,6 +37,7 @@ struct Profile: Equatable {
     }
     
     static func logout () -> Self {
+        Profile.clearSaved()
         return .empty
     }
 }
