@@ -250,7 +250,7 @@ struct RegisterView: View {
                         print("DEBUG: Selected role: \(selectedRole)")
                         print("DEBUG: User role from response: \(user.role ?? "NIL")")
                         
-                        var newProfile = user.toProfile()
+                        let newProfile = user.toProfile()
                         
                         profile = newProfile
                         

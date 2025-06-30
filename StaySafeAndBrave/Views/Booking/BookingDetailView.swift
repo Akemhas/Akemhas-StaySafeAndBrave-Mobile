@@ -10,14 +10,27 @@ import SwiftData
 
 struct BookingDetailView: View {
     let booking: BookingResponseDTO
+    var onDismiss: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    
     @State private var showingCancelAlert = false
+    @State private var showingRescheduleSheet = false
     @State private var isUpdating = false
+    @State private var showingErrorAlert = false
+    @State private var errorMessage: String?
+    
+    @StateObject private var bookingViewModel = BookingViewModel()
+    
+    // Reschedule states
+    @State private var newDate = Date()
+    @State private var rescheduleMessage = ""
     
     // Dummy data - replace with API calls when backend is ready
     private let dummyMentorName = "John Doe"
     private let dummyMentorLocation = "Cape Town"
     private let dummyMentorImage = "https://hochschule-rhein-waal.sciebo.de/s/zKzF7MWJatLpR5P/download"
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -97,7 +110,7 @@ struct BookingDetailView: View {
                             if let description = booking.description, !description.isEmpty {
                                 DetailRow(
                                     icon: "text.alignleft",
-                                    title: "Message",
+                                    title: "Description",
                                     value: description
                                 )
                             }
@@ -126,7 +139,7 @@ struct BookingDetailView: View {
                             .disabled(isUpdating)
                             
                             Button(action: {
-                                // TODO: Implement reschedule functionality
+                                showingRescheduleSheet = true
                             }) {
                                 HStack {
                                     Image(systemName: "calendar.badge.clock")
@@ -156,6 +169,9 @@ struct BookingDetailView: View {
                 }
             }
         }
+        .onAppear {
+            bookingViewModel.onAppear(modelContext: modelContext)
+        }
         .alert("Cancel Booking", isPresented: $showingCancelAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Confirm", role: .destructive) {
@@ -164,29 +180,117 @@ struct BookingDetailView: View {
         } message: {
             Text("Are you sure you want to cancel this booking? This action cannot be undone.")
         }
+        .alert("Error", isPresented: $showingErrorAlert) {
+            Button("OK") {
+                errorMessage = nil
+            }
+        } message: {
+            Text(errorMessage ?? "Unknown error occurred")
+        }
+        .sheet(isPresented: $showingRescheduleSheet) {
+            rescheduleBookingView
+        }
+    }
+    
+    private var rescheduleBookingView: some View {
+        NavigationView {
+            VStack {
+                Form {
+                    Section("Reschedule Booking") {
+                        DatePicker(
+                            "New Date & Time",
+                            selection: $newDate,
+                            in: Date()...,
+                            displayedComponents: [.date, .hourAndMinute]
+                        )
+                        .datePickerStyle(.graphical)
+                    }
+                }
+
+                Spacer()
+
+                Button(action: rescheduleBooking) {
+                    HStack {
+                        if isUpdating {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("Updating...")
+                        } else {
+                            Text("Reschedule Booking")
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(isUpdating ? Color.gray.opacity(0.5) : Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                    .padding([.horizontal, .bottom])
+                }
+                .disabled(isUpdating)
+            }
+            .navigationTitle("Reschedule")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        showingRescheduleSheet = false
+                    }
+                }
+            }
+        }
     }
     
     private func cancelBooking() {
+        guard let bookingId = booking.id else {
+            errorMessage = "Invalid booking ID"
+            showingErrorAlert = true
+            return
+        }
+        
         isUpdating = true
         
-        // TODO: Uncomment when backend supports booking updates
-        /*
         Task {
-            let success = await bookingViewModel.cancelBooking(id: booking.id ?? UUID())
+            let success = await bookingViewModel.cancelBooking(id: bookingId)
             
             await MainActor.run {
                 isUpdating = false
                 if success {
                     dismiss()
+                } else {
+                    errorMessage = bookingViewModel.errorMessage ?? "Failed to cancel booking"
+                    showingErrorAlert = true
                 }
             }
         }
-        */
+    }
+    
+    private func rescheduleBooking() {
+        guard let bookingId = booking.id else {
+            errorMessage = "Invalid booking ID"
+            showingErrorAlert = true
+            return
+        }
         
-        // Simulate API call for now
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            isUpdating = false
-            dismiss()
+        isUpdating = true
+        
+        Task {
+            let success = await bookingViewModel.updateBooking(
+                id: bookingId,
+                date: newDate,
+                status: "pending" // Reset to pending after reschedule
+            )
+            
+            await MainActor.run {
+                  isUpdating = false
+                  if success {
+                      showingRescheduleSheet = false
+                      dismiss()
+                      onDismiss?() // Call this to notify BookingView to update it's content
+                  } else {
+                      errorMessage = bookingViewModel.errorMessage ?? "Failed to reschedule booking"
+                      showingErrorAlert = true
+                  }
+              }
         }
     }
 }

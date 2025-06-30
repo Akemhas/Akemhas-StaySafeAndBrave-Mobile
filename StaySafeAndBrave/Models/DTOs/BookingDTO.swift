@@ -8,7 +8,7 @@ import Foundation
 
 // MARK: - Response DTO
 
-struct BookingResponseDTO: Codable {
+struct BookingResponseDTO: Codable, Identifiable {
     var id: UUID?
     var userID: UUID?
     var mentorID: UUID?

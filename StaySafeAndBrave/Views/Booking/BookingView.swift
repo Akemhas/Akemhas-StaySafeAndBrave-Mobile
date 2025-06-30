@@ -15,6 +15,8 @@ struct BookingView: View {
     @State private var selectedFilter: BookingFilter = .all
     @State private var showingErrorAlert = false
     
+    @State private var selectedBooking: BookingResponseDTO?
+    
     var profile: Profile
     
     enum BookingFilter: String, CaseIterable {
@@ -48,8 +50,6 @@ struct BookingView: View {
                 $0.status?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "cancelled"
             }
         }
-        
-        print("Filter: \(selectedFilter.rawValue) - \(bookingsToFilter.count)/\(bookingViewModel.bookings.count)")
         
         if searchText.isEmpty {
             return bookingsToFilter
@@ -101,6 +101,8 @@ struct BookingView: View {
             } else {
                 List(filteredBookings, id: \.id) { booking in
                     BookingRow(booking: booking) {
+                        // Set the selected booking - this will trigger the sheet
+                        selectedBooking = booking
                     }
                     .listRowSeparator(.hidden)
                     .listRowInsets(.init(top: 8, leading: 16, bottom: 8, trailing: 16))
@@ -130,6 +132,15 @@ struct BookingView: View {
         .onChange(of: bookingViewModel.errorMessage) { _, newValue in
             showingErrorAlert = newValue != nil
         }
+        .sheet(item: $selectedBooking, onDismiss: {
+            selectedBooking = nil
+        }) { booking in
+            BookingDetailView(booking: booking){
+                Task{
+                    await loadBookings()
+                }
+            }
+        }
     }
     
     private func loadBookings() async {
@@ -148,7 +159,6 @@ struct BookingView: View {
     func applySearch() {
     }
 }
-
 
 #Preview {
     BookingView(profile: Profile.testMentor)
