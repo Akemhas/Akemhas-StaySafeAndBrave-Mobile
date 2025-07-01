@@ -1,7 +1,8 @@
 //
-//  BaseAPIService.swift (Improved Error Handling)
+//  BookingAPIService.swift
 //  StaySafeAndBrave
 //
+//  Created by Akif Emre Bozdemir on 6/28/25.
 
 import Foundation
 
@@ -13,7 +14,6 @@ enum HTTPMethod: String {
     case PATCH = "PATCH"
 }
 
-// Add this struct to handle Vapor's error format
 struct VaporErrorResponse: Decodable {
     let error: Bool?
     let reason: String?
@@ -25,7 +25,6 @@ struct VaporErrorResponse: Decodable {
 
 class BaseAPIService: ObservableObject {
     
-    // Use centralized configuration
     private let apiConfig = APIConfiguration.shared
     
     var baseURL: URL {
@@ -45,9 +44,9 @@ class BaseAPIService: ObservableObject {
         request.httpBody = body
         
         #if DEBUG
-        print("🌐 API Request: \(method.rawValue) \(url)")
+        print("API Request: \(method.rawValue) \(url)")
         if let body = body, let bodyString = String(data: body, encoding: .utf8) {
-            print("📤 Request Body: \(bodyString)")
+            print("Request Body: \(bodyString)")
         }
         #endif
         
@@ -65,9 +64,9 @@ class BaseAPIService: ObservableObject {
         }
         
         #if DEBUG
-        print("📡 API Response: \(httpResponse.statusCode)")
+        print("API Response: \(httpResponse.statusCode)")
         if let responseString = String(data: data, encoding: .utf8) {
-            print("📥 Response Data: \(responseString)")
+            print("Response Data: \(responseString)")
         }
         #endif
         
@@ -78,16 +77,16 @@ class BaseAPIService: ObservableObject {
             // Try to parse different error response formats
             if let vaporError = try? JSONDecoder().decode(VaporErrorResponse.self, from: data) {
                 errorMessage = vaporError.displayMessage
-                print("🔍 Parsed Vapor error: \(errorMessage ?? "Unknown")")
+                print("Parsed Vapor error: \(errorMessage ?? "Unknown")")
             } else if let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
                 errorMessage = errorResponse.displayMessage
-                print("🔍 Parsed standard error: \(errorMessage ?? "Unknown")")
+                print("Parsed standard error: \(errorMessage ?? "Unknown")")
             } else if let responseString = String(data: data, encoding: .utf8), !responseString.isEmpty {
                 errorMessage = responseString
-                print("🔍 Raw error response: \(errorMessage ?? "Unknown")")
+                print("Raw error response: \(errorMessage ?? "Unknown")")
             } else {
                 errorMessage = nil
-                print("🔍 No error message could be parsed")
+                print("No error message could be parsed")
             }
             
             throw APIError.invalidResponse(statusCode: httpResponse.statusCode, message: errorMessage)
@@ -103,9 +102,9 @@ class BaseAPIService: ObservableObject {
             let decoded = try JSONDecoder.apiDecoder.decode(T.self, from: data)
             return decoded
         } catch {
-            print("❌ Decoding error: \(error)")
+            print("Decoding error: \(error)")
             if let decodingError = error as? DecodingError {
-                print("❌ Detailed decoding error: \(decodingError)")
+                print("Detailed decoding error: \(decodingError)")
             }
             throw APIError.decodingError(error)
         }
@@ -124,13 +123,13 @@ class BaseAPIService: ObservableObject {
             let (data, response) = try await URLSession.shared.data(for: request)
             return try handleResponse(responseType, data: data, response: response)
         } catch let urlError as URLError {
-            print("❌ Network error: \(urlError)")
+            print("Network error: \(urlError)")
             throw APIError.networkError(urlError)
         } catch let apiError as APIError {
-            print("❌ API error: \(apiError)")
+            print("API error: \(apiError)")
             throw apiError
         } catch {
-            print("❌ Unknown error: \(error)")
+            print("Unknown error: \(error)")
             throw APIError.unknown(error)
         }
     }

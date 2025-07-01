@@ -17,9 +17,6 @@ final class User {
     var role: UserRole
     var created_at: Date
     var birth_date: Date
-    //var hobbies: [Hobby]
-    //var languages: [AvailableLanguage]
-    //var preferred_language: AvailableLanguage
     
     init(
         user_id: UUID = UUID(),
@@ -29,9 +26,6 @@ final class User {
         role: UserRole,
         created_at: Date = Date(),
         birth_date: Date,
-        //hobbies: [Hobby] = [],
-        //languages: [AvailableLanguage] = [],
-        //preferred_language: AvailableLanguage
     ) {
         self.user_id = user_id
         self.name = name
@@ -40,9 +34,6 @@ final class User {
         self.role = role
         self.created_at = created_at
         self.birth_date = birth_date
-      //  self.hobbies = hobbies
-      //  self.languages = languages
-      //  self.preferred_language = preferred_language
     }
 }
 

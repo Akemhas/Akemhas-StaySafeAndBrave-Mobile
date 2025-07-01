@@ -29,7 +29,7 @@ class MentorAPIService: BaseAPIService {
     
     /// Fetch all mentors from the backend
     func fetchMentors() async throws -> [MentorResponseDTO] {
-        print("🔄 Fetching all mentors...")
+        print("Fetching all mentors...")
         
         return try await performRequest(
             endpoint: Endpoints.mentors,
@@ -40,7 +40,7 @@ class MentorAPIService: BaseAPIService {
     
     /// Fetch a single mentor by ID
     func fetchMentor(id: UUID) async throws -> MentorResponseDTO {
-        print("🔄 Fetching mentor with ID: \(id.uuidString)")
+        print("Fetching mentor with ID: \(id.uuidString)")
         
         return try await performRequest(
             endpoint: Endpoints.mentor(id: id),
@@ -51,7 +51,7 @@ class MentorAPIService: BaseAPIService {
     
     /// Create a new mentor
     func createMentor(data: MentorCreateDTO) async throws -> MentorResponseDTO {
-        print("🔄 Creating new mentor...")
+        print("Creating new mentor...")
         
         do {
             let body = try JSONEncoder.apiEncoder.encode(data)
@@ -63,14 +63,14 @@ class MentorAPIService: BaseAPIService {
                 responseType: MentorResponseDTO.self
             )
         } catch {
-            print("❌ Failed to encode mentor data: \(error)")
+            print("Failed to encode mentor data: \(error)")
             throw APIError.encodingError(error)
         }
     }
     
     /// Update an existing mentor
     func updateMentor(id: UUID, data: MentorUpdateDTO) async throws -> MentorResponseDTO {
-        print("🔄 Updating mentor with ID: \(id.uuidString)")
+        print("Updating mentor with ID: \(id.uuidString)")
         
         do {
             let body = try JSONEncoder.apiEncoder.encode(data)
@@ -82,14 +82,14 @@ class MentorAPIService: BaseAPIService {
                 responseType: MentorResponseDTO.self
             )
         } catch {
-            print("❌ Failed to encode mentor update data: \(error)")
+            print("Failed to encode mentor update data: \(error)")
             throw APIError.encodingError(error)
         }
     }
     
     /// Delete a mentor
     func deleteMentor(id: UUID) async throws {
-        print("🔄 Deleting mentor with ID: \(id.uuidString)")
+        print("Deleting mentor with ID: \(id.uuidString)")
         
         let _: EmptyResponse = try await performRequest(
             endpoint: Endpoints.mentor(id: id),
@@ -97,6 +97,6 @@ class MentorAPIService: BaseAPIService {
             responseType: EmptyResponse.self
         )
         
-        print("✅ Mentor deleted successfully")
+        print("Mentor deleted successfully")
     }
 }

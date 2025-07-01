@@ -23,14 +23,12 @@ class UserAPIService: BaseAPIService {
         }
     }
     
-    /// Register a new user - your backend returns UserResponseDTO directly
     func register(data: UserRegistrationDTO) async throws -> AuthResponseDTO {
-        print("🔄 Registering new user: \(data.email)")
+        print("Registering new user: \(data.email)")
         
         do {
             let body = try JSONEncoder.apiEncoder.encode(data)
             
-            // Your backend returns UserResponseDTO directly, not wrapped in AuthResponseDTO
             let userResponse = try await performRequest(
                 endpoint: Endpoints.register,
                 method: .POST,
@@ -38,31 +36,27 @@ class UserAPIService: BaseAPIService {
                 responseType: UserResponseDTO.self
             )
             
-            print("✅ Registration API successful, user: \(userResponse.name ?? "Unknown")")
+            print("Registration API successful, user: \(userResponse.name ?? "Unknown")")
             
-            // Convert to AuthResponseDTO for compatibility with existing code
             return userResponse.toAuthResponse()
             
         } catch let apiError as APIError {
-            print("❌ API registration error: \(apiError)")
+            print("API registration error: \(apiError)")
             throw apiError
         } catch {
-            print("❌ Failed to encode registration data: \(error)")
+            print("Failed to encode registration data: \(error)")
             throw APIError.encodingError(error)
         }
     }
     
-    /// Login user - adjust this based on your actual login response format
     func login(email: String, password: String) async throws -> AuthResponseDTO {
-        print("🔄 Logging in user: \(email)")
+        print("Logging in user: \(email)")
         
         let loginData = UserLoginDTO(email: email, password: password)
         
         do {
             let body = try JSONEncoder.apiEncoder.encode(loginData)
             
-            // Assuming login also returns UserResponseDTO directly
-            // Adjust this if your login endpoint has a different response format
             let userResponse = try await performRequest(
                 endpoint: Endpoints.login,
                 method: .POST,
@@ -70,22 +64,22 @@ class UserAPIService: BaseAPIService {
                 responseType: UserResponseDTO.self
             )
             
-            print("✅ Login API successful, user: \(userResponse.name ?? "Unknown")")
+            print("Login API successful, user: \(userResponse.name ?? "Unknown")")
             
             return userResponse.toAuthResponse()
             
         } catch let apiError as APIError {
-            print("❌ API login error: \(apiError)")
+            print("API login error: \(apiError)")
             throw apiError
         } catch {
-            print("❌ Failed to encode login data: \(error)")
+            print("Failed to encode login data: \(error)")
             throw APIError.encodingError(error)
         }
     }
     
     /// Get user by ID
     func getUser(id: UUID) async throws -> UserResponseDTO {
-        print("🔄 Fetching user with ID: \(id.uuidString)")
+        print("Fetching user with ID: \(id.uuidString)")
         
         return try await performRequest(
             endpoint: Endpoints.user(id: id),
@@ -96,7 +90,7 @@ class UserAPIService: BaseAPIService {
     
     /// Update user
     func updateUser(id: UUID, data: UserUpdateDTO) async throws -> UserResponseDTO {
-        print("🔄 Updating user with ID: \(id.uuidString)")
+        print("Updating user with ID: \(id.uuidString)")
         
         do {
             let body = try JSONEncoder.apiEncoder.encode(data)
@@ -108,17 +102,17 @@ class UserAPIService: BaseAPIService {
                 responseType: UserResponseDTO.self
             )
         } catch let apiError as APIError {
-            print("❌ API update error: \(apiError)")
+            print("API update error: \(apiError)")
             throw apiError
         } catch {
-            print("❌ Failed to encode user update data: \(error)")
+            print("Failed to encode user update data: \(error)")
             throw APIError.encodingError(error)
         }
     }
     
     /// Get all users (admin function)
     func getAllUsers() async throws -> [UserResponseDTO] {
-        print("🔄 Fetching all users...")
+        print("Fetching all users...")
         
         return try await performRequest(
             endpoint: Endpoints.users,

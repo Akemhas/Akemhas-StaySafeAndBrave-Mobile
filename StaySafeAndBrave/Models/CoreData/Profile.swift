@@ -24,6 +24,8 @@ struct Profile: Equatable {
     
     static let testMentor = Profile(user_id: "mentor012", name: "Test Mentor", email: "Mentor@test.de", role: .mentor, birth_date: Date(timeIntervalSince1970: 0), hobbies: [Hobby.coding, Hobby.cooking], languages: [AvailableLanguage.english, AvailableLanguage.german], image: sampleImagesURL.nomusaURL.rawValue, city: City.dortmund, bio: "My Test Mentor bio...", rating: 4.9)
     
+    static let testUser = Profile(user_id: "tester012", name: "Test User", email: "User@test.de", role: .user, birth_date: Date(timeIntervalSince1970: 0))
+
     static func register(_name: String, _email: String, _role: Role, _birth_date: Date) -> Self{
         return Profile(user_id: "registerUser123", name: _name, email: _email, role: _role, birth_date: _birth_date)
     }

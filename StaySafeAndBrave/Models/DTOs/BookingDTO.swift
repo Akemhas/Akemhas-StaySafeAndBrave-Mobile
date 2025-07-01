@@ -55,7 +55,6 @@ struct BookingResponseDTO: Codable, Identifiable {
 
 // MARK: - Create DTO
 
-/// Create DTO for creating new bookings
 struct BookingCreateDTO: Codable {
     var userID: UUID
     var mentorID: UUID
@@ -65,7 +64,6 @@ struct BookingCreateDTO: Codable {
     
     // MARK: - Initializers
     
-    /// Main initializer for creating bookings
     init(userID: UUID,
          mentorID: UUID,
          date: Date,
@@ -103,7 +101,6 @@ struct BookingCreateDTO: Codable {
 
 // MARK: - Update DTO
 
-/// Update DTO for updating existing bookings
 struct BookingUpdateDTO: Codable {
     var mentorID: UUID?
     var date: Date?
@@ -157,18 +154,16 @@ extension BookingResponseDTO {
 }
 
 extension Booking {
-    /// Convert your frontend Booking model to backend create DTO
     func toCreateDTO() -> BookingCreateDTO {
         return BookingCreateDTO(
             userID: self.user.user_id,
             mentorID: self.mentor.user_id,
             date: self.date,
             status: self.status,
-            description: "" // Add description field to your Booking model if needed
+            description: ""
         )
     }
     
-    /// Convert your frontend Booking model to backend update DTO
     func toUpdateDTO() -> BookingUpdateDTO {
         return BookingUpdateDTO(
             mentorID: self.mentor.user_id,
@@ -181,12 +176,10 @@ extension Booking {
 // MARK: - Validation Extensions
 
 extension BookingCreateDTO {
-    /// Validate that the DTO has required fields for backend
     var isValid: Bool {
         return !userID.uuidString.isEmpty && !mentorID.uuidString.isEmpty
     }
     
-    /// Get validation errors
     var validationErrors: [String] {
         var errors: [String] = []
         

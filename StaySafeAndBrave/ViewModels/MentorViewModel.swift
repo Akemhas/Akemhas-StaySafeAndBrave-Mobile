@@ -101,7 +101,6 @@ final class MentorViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        // Use the convenience initializer that handles conversion
         let createDTO = MentorCreateDTO(
             userID: userID,
             name: name,
@@ -115,7 +114,7 @@ final class MentorViewModel: ObservableObject {
         )
         
         do {
-            print("🔄 Creating mentor: \(name)")
+            print("Creating mentor: \(name)")
             
             let createdData = try await mentorAPIService.createMentor(data: createDTO)
             let mentor = createdData.toMentorModel()
@@ -172,9 +171,6 @@ final class MentorViewModel: ObservableObject {
             mentor.hobbies = updatedData.frontendHobbies ?? mentor.hobbies
             mentor.location = updatedData.frontendLocation ?? mentor.location
             mentor.timestamp_last_update = Date()
-            
-            // Update location_for_sorting field
-            mentor.location_for_sorting = mentor.location.rawValue
             
             try context.save()
             

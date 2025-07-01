@@ -6,15 +6,14 @@
 
 import Foundation
 
-// MARK: - User Response DTO (matches your actual backend response)
+// MARK: - User Response DTO
 
-/// Response DTO for user data from backend - this is what your backend actually returns
 struct UserResponseDTO: Codable {
     var id: UUID?
     var name: String?
     var email: String?
-    var role: String? // Backend uses String, we convert to Role enum
-    var birth_date: String? // Backend sends as String
+    var role: String?
+    var birth_date: String?
     var created_at: String?
     var updated_at: String?
     
@@ -33,18 +32,16 @@ struct UserResponseDTO: Codable {
     }
 }
 
-// MARK: - Registration Response (what your backend actually returns)
+// MARK: - Registration Response
 
-/// This matches what your backend actually returns for registration
-/// Your backend returns the user object directly, not wrapped in an AuthResponseDTO
 typealias RegistrationResponseDTO = UserResponseDTO
 
-// MARK: - Auth Response DTO (for login - if your backend uses different format)
+// MARK: - Auth Response DTO
 
-/// Response DTO for authentication (login) - adjust based on your actual login response
+/// Response DTO for authentication (login)
 struct AuthResponseDTO: Codable {
     var user: UserResponseDTO?
-    var token: String? // If your backend uses JWT tokens
+    var token: String?
     var message: String?
     
     var isSuccess: Bool {
@@ -66,12 +63,11 @@ struct UserRegistrationDTO: Codable {
     var name: String
     var email: String
     var password: String
-    var role: String // Send as string to backend
-    var birth_date: String? // Send as string to backend
+    var role: String
+    var birth_date: String?
     
     // MARK: - Initializers
     
-    /// Main initializer that accepts frontend types
     init(name: String, email: String, password: String, role: Role, birth_date: Date? = nil) {
         self.name = name
         self.email = email

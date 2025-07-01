@@ -181,22 +181,18 @@ final class BookingViewModel: ObservableObject {
         return bookings.filter { $0.status?.lowercased() == status.lowercased() }
     }
     
-    /// Get pending bookings
     var pendingBookings: [BookingResponseDTO] {
         return getBookings(withStatus: "pending")
     }
     
-    /// Get accepted bookings
     var acceptedBookings: [BookingResponseDTO] {
         return getBookings(withStatus: "accepted")
     }
     
-    /// Get rejected bookings
     var rejectedBookings: [BookingResponseDTO] {
         return getBookings(withStatus: "rejected")
     }
     
-    /// Clear error message
     func clearErrorMessage() {
         errorMessage = nil
     }

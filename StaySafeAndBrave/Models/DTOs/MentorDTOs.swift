@@ -1,17 +1,13 @@
 //
-//  MentorDTOs.swift
+//  UserDTO.swift
 //  StaySafeAndBrave
 //
-//  Purpose: Data Transfer Objects for API communication with backend
-//  Uses existing enums: AvailableLanguage, Hobby, City
-//
+//  Created by Akif Emre Bozdemir on 6/28/25.
 
 import Foundation
 
 // MARK: - Response DTO
 
-/// Response DTO that matches your backend MentorResponseDTO
-/// This is what the backend sends to the frontend
 struct MentorResponseDTO: Codable {
     var id: UUID?
     var name: String?
@@ -19,37 +15,32 @@ struct MentorResponseDTO: Codable {
     var score: Float?
     var birth_date: String? // Backend sends this as String
     var bio: String?
-    var languages: [String]? // Backend uses [String], we convert to [AvailableLanguage]
-    var hobbies: [String]? // Backend uses [String], we convert to [Hobby]
-    var location: String? // Backend uses String, we convert to City
+    var languages: [String]?
+    var hobbies: [String]?
+    var location: String?
     
     // MARK: - Computed Properties
     
-    /// Convert birth_date string to Date using centralized formatter
     var birthDateAsDate: Date? {
         guard let birth_date = birth_date else { return nil }
         return birth_date.apiDate
     }
     
-    /// Get display-friendly birth date
     var birthDateDisplay: String? {
         guard let birthDate = birthDateAsDate else { return nil }
         return birthDate.displayString
     }
     
-    /// Convert backend language strings to frontend AvailableLanguage enums
     var frontendLanguages: [AvailableLanguage]? {
         guard let languages = languages else { return nil }
         return languages.compactMap { AvailableLanguage(rawValue: $0) }
     }
     
-    /// Convert backend hobby strings to frontend Hobby enums
     var frontendHobbies: [Hobby]? {
         guard let hobbies = hobbies else { return nil }
         return hobbies.compactMap { Hobby(rawValue: $0) }
     }
     
-    /// Convert backend location string to frontend City enum
     var frontendLocation: City? {
         guard let location = location else { return nil }
         return City(rawValue: location)
@@ -58,22 +49,19 @@ struct MentorResponseDTO: Codable {
 
 // MARK: - Create DTO
 
-/// Create DTO for creating new mentors
-/// This is what the frontend sends to the backend when creating a mentor
 struct MentorCreateDTO: Codable {
-    var userID: UUID // Backend requires userID
+    var userID: UUID
     var name: String?
     var profile_image: String?
     var score: Float?
-    var birth_date: String? // Send as string to match backend expectations
+    var birth_date: String?
     var bio: String?
-    var languages: [String]? // Send as strings to backend
-    var hobbies: [String]? // Send as strings to backend
-    var location: String? // Send as string to backend
+    var languages: [String]?
+    var hobbies: [String]?
+    var location: String?
     
     // MARK: - Initializers
     
-    /// Main initializer that accepts your frontend types and converts them to backend format
     init(userID: UUID,
          name: String? = nil,
          profile_image: String? = nil,
@@ -95,11 +83,10 @@ struct MentorCreateDTO: Codable {
         self.hobbies = hobbies?.map { $0.rawValue }
         self.location = location?.rawValue
         
-        // Convert Date to String using centralized formatter
+        // Convert Date to String
         self.birth_date = birth_date?.apiString
     }
     
-    /// Alternative initializer if you already have backend-compatible types
     init(userID: UUID,
          name: String? = nil,
          profile_image: String? = nil,
@@ -124,17 +111,15 @@ struct MentorCreateDTO: Codable {
 
 // MARK: - Update DTO
 
-/// Update DTO for updating existing mentors
-/// This is what the frontend sends to the backend when updating a mentor
 struct MentorUpdateDTO: Codable {
     var name: String?
     var profile_image: String?
     var score: Float?
-    var birth_date: String? // Send as string to match backend expectations
+    var birth_date: String?
     var bio: String?
-    var languages: [String]? // Send as strings to backend
-    var hobbies: [String]? // Send as strings to backend
-    var location: String? // Send as string to backend
+    var languages: [String]?
+    var hobbies: [String]?
+    var location: String?
     
     // MARK: - Initializers
     
@@ -162,7 +147,6 @@ struct MentorUpdateDTO: Codable {
         self.birth_date = birth_date?.apiString
     }
     
-    /// Alternative initializer if you already have backend-compatible types
     init(name: String? = nil,
          profile_image: String? = nil,
          score: Float? = nil,
@@ -186,19 +170,18 @@ struct MentorUpdateDTO: Codable {
 // MARK: - Conversion Extensions
 
 extension MentorResponseDTO {
-    /// Convert backend response to your frontend Mentor model
     func toMentorModel() -> Mentor {
         return Mentor(
-            timestamp_creation: Date(), // Use current date since backend doesn't provide this
+            timestamp_creation: Date(),
             id: self.id ?? UUID(),
             name: self.name ?? "Unknown",
             profile_image: self.profile_image,
             score: self.score,
             birth_date: self.birthDateAsDate ?? Date(),
             bio: self.bio,
-            languages: self.frontendLanguages, // Uses computed property
-            hobbies: self.frontendHobbies, // Uses computed property
-            location: self.frontendLocation ?? .capetown // Uses computed property with fallback
+            languages: self.frontendLanguages,
+            hobbies: self.frontendHobbies,
+            location: self.frontendLocation ?? .capetown
         )
     }
 }
@@ -237,13 +220,10 @@ extension Mentor {
 // MARK: - Validation Extensions
 
 extension MentorCreateDTO {
-    /// Validate that the DTO has required fields for backend
     var isValid: Bool {
-        // Add validation logic based on your backend requirements
         return !userID.uuidString.isEmpty
     }
     
-    /// Get validation errors
     var validationErrors: [String] {
         var errors: [String] = []
         
@@ -260,7 +240,6 @@ extension MentorCreateDTO {
 }
 
 extension MentorUpdateDTO {
-    /// Check if the update DTO has any fields to update
     var hasUpdates: Bool {
         return name != nil ||
                profile_image != nil ||

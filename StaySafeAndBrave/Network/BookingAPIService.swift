@@ -92,7 +92,7 @@ class BookingAPIService: BaseAPIService {
         print("Booking deleted successfully")
     }
     
-    /// Accept a booking (convenience method for status update)
+    /// Accept a booking
     func acceptBooking(id: UUID) async throws -> BookingResponseDTO {
         print("Accepting booking with ID: \(id.uuidString)")
         
@@ -100,7 +100,7 @@ class BookingAPIService: BaseAPIService {
         return try await updateBooking(id: id, data: updateData)
     }
     
-    /// Reject a booking (convenience method for status update)
+    /// Reject a booking
     func rejectBooking(id: UUID) async throws -> BookingResponseDTO {
         print("Rejecting booking with ID: \(id.uuidString)")
         
@@ -108,7 +108,7 @@ class BookingAPIService: BaseAPIService {
         return try await updateBooking(id: id, data: updateData)
     }
     
-    /// Cancel a booking (convenience method for status update)
+    /// Cancel a booking
     func cancelBooking(id: UUID) async throws -> BookingResponseDTO {
         print("Cancelling booking with ID: \(id.uuidString)")
         

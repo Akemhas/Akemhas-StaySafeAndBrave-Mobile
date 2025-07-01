@@ -60,12 +60,19 @@ struct LoginView: View {
                 .padding(.horizontal)
             
             Button{
-                if email == "mentor@mail.com" {
+                if email == "user@mail.com" {
+                    let testProfile = Profile.testUser
+                    profile = testProfile
+                    testProfile.save()
+                    dismiss()
+                }
+                else if email == "mentor@mail.com" {
                     let testProfile = Profile.testMentor
                     profile = testProfile
                     testProfile.save()
                     dismiss()
-                } else {
+                }
+                else {
                     loginUser()
                 }
             }
@@ -92,6 +99,11 @@ struct LoginView: View {
             }
             .disabled(!isValid || isLoading)
             
+            Text("Tip: Enter 'user@mail.com' as email for test user login")
+                .font(.caption)
+                .foregroundColor(.gray)
+                .padding(.top, 8)
+
             Text("Tip: Enter 'mentor@mail.com' as email for test mentor login")
                 .font(.caption)
                 .foregroundColor(.gray)
