@@ -14,15 +14,15 @@ final class Mentor {
     var timestamp_last_update: Date
     @Attribute(.unique) var id: UUID
     var name: String
-    var profile_image: String // Path to the image
+    var profile_image: String // Path to the image. Right now only working with links
     var score: Float
     var birth_date: Date
     var bio: String
     var languages: [AvailableLanguage]?
     var hobbies: [Hobby]?
     var location: City
-    var location_for_sorting: String?
-    
+    var location_for_sorting: String? // needed to make sorting work
+    // age calculated for display purposes only. Sort with birth_date
     var age: Int {
         let calendar = Calendar.current
         let ageComponents = calendar.dateComponents([.year], from: birth_date, to: Date())

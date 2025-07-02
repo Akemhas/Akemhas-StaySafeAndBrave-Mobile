@@ -3,7 +3,7 @@
 //  StaySafeAndBrave
 //
 //  Created by Sarmiento Castrillon, Clein Alexander on 15.05.25.
-//
+// Here you can add the icons for the app. This way it is easier to call them later
 
 import SwiftUI
 

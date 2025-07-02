@@ -10,6 +10,7 @@ import SwiftData
 
 struct BookingDetailView: View {
     let booking: BookingResponseDTO
+    let currentUserProfile: Profile // Add this to pass the current user's profile
     var onDismiss: (() -> Void)? = nil
     @StateObject private var bookingViewModel = BookingViewModel()
 
@@ -17,6 +18,7 @@ struct BookingDetailView: View {
     @Environment(\.modelContext) private var modelContext
     
     @State private var showingCancelAlert = false
+    @State private var showingAcceptAlert = false
     @State private var showingRescheduleSheet = false
     @State private var isUpdating = false
     @State private var showingErrorAlert = false
@@ -120,9 +122,10 @@ struct BookingDetailView: View {
                     .background(Color(.systemGray6))
                     .cornerRadius(12)
                     
-                    // Action Buttons
+                    // Action Buttons - Role-based
                     if booking.status?.lowercased() == "pending" {
                         VStack(spacing: 12) {
+                            // Cancel button - available for both users and mentors
                             Button(action: {
                                 showingCancelAlert = true
                             }) {
@@ -138,20 +141,40 @@ struct BookingDetailView: View {
                             }
                             .disabled(isUpdating)
                             
-                            Button(action: {
-                                showingRescheduleSheet = true
-                            }) {
-                                HStack {
-                                    Image(systemName: "calendar.badge.clock")
-                                    Text("Reschedule")
+                            // Role-specific buttons
+                            if currentUserProfile.role == .mentor {
+                                // Accept button - only for mentors
+                                Button(action: {
+                                    showingAcceptAlert = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "checkmark.circle")
+                                        Text("Accept Booking")
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.green)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(10)
                                 }
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
+                                .disabled(isUpdating)
+                            } else {
+                                // Reschedule button - only for regular users
+                                Button(action: {
+                                    showingRescheduleSheet = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "calendar.badge.clock")
+                                        Text("Reschedule")
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(10)
+                                }
+                                .disabled(isUpdating)
                             }
-                            .disabled(isUpdating)
                         }
                     }
                     
@@ -179,6 +202,14 @@ struct BookingDetailView: View {
             }
         } message: {
             Text("Are you sure you want to cancel this booking? This action cannot be undone.")
+        }
+        .alert("Accept Booking", isPresented: $showingAcceptAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Accept", role: .none) {
+                acceptBooking()
+            }
+        } message: {
+            Text("Are you sure you want to accept this booking?")
         }
         .alert("Error", isPresented: $showingErrorAlert) {
             Button("OK") {
@@ -258,6 +289,35 @@ struct BookingDetailView: View {
                     dismiss()
                 } else {
                     errorMessage = bookingViewModel.errorMessage ?? "Failed to cancel booking"
+                    showingErrorAlert = true
+                }
+            }
+        }
+    }
+    
+    private func acceptBooking() {
+        guard let bookingId = booking.id else {
+            errorMessage = "Invalid booking ID"
+            showingErrorAlert = true
+            return
+        }
+        
+        isUpdating = true
+        
+        Task {
+            let success = await bookingViewModel.updateBooking(
+                id: bookingId,
+                date: booking.date != nil ? DateFormatter().date(from: booking.date!) ?? Date() : Date(),
+                status: "accepted"
+            )
+            
+            await MainActor.run {
+                isUpdating = false
+                if success {
+                    dismiss()
+                    onDismiss?() // Call this to notify BookingView to update its content
+                } else {
+                    errorMessage = bookingViewModel.errorMessage ?? "Failed to accept booking"
                     showingErrorAlert = true
                 }
             }
@@ -353,12 +413,15 @@ struct StatusBadge: View {
 }
 
 #Preview {
-    BookingDetailView(booking: BookingResponseDTO(
-        id: UUID(),
-        userID: UUID(),
-        mentorID: UUID(),
-        date: "30/06/2025",
-        status: "pending",
-        description: "Looking forward to meeting you!"
-    ))
+    BookingDetailView(
+        booking: BookingResponseDTO(
+            id: UUID(),
+            userID: UUID(),
+            mentorID: UUID(),
+            date: "30/06/2025",
+            status: "pending",
+            description: "Looking forward to meeting you!"
+        ),
+        currentUserProfile: Profile.testMentor
+    )
 }

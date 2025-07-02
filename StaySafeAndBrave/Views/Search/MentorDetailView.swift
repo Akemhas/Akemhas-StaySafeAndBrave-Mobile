@@ -3,7 +3,7 @@
 //  StaySafeAndBrave
 //
 //  Created by Sarmiento Castrillon, Clein Alexander on 26.05.25.
-//
+// View displayed after selecting a mentor
 
 import SwiftUI
 
@@ -25,6 +25,7 @@ struct MentorDetailView: View {
     var body: some View {
         ZStack(alignment: .bottom){
             ScrollView {
+                /// Reuses the view of the mentor list
                 MentorRowListView(mentor: mentor)
                     .padding()
                 // Add spaces such that the text is still readable
@@ -32,7 +33,7 @@ struct MentorDetailView: View {
                 
                 Text(bioSpaced)
                     .padding(.horizontal)
-                    .multilineTextAlignment(.leading) // There is a way to justify the text using UITextView
+                    .multilineTextAlignment(.leading) // There is a way to justify the text using UITextView. but it is not being implemented yet
                 Spacer().frame(height: 100)
             }
             
@@ -41,38 +42,41 @@ struct MentorDetailView: View {
                 
                 HStack {
                     Spacer()
-                    
-                    if profile != Profile.empty {
-                        Button(action: toBookingView) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "calendar.badge.plus")
-                                    .font(.title2)
-                                    .fontWeight(.semibold)
-                                
-                                Text("Book Mentor")
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 16)
-                            .background(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.teal, Color.teal.opacity(0.9)]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
+                    /// allow booking only if user is logged in
+                    if profile != Profile.empty{
+                        if(profile.role == .user){
+                            // Booking button
+                            Button(action: toBookingView) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "calendar.badge.plus")
+                                        .font(.title2)
+                                        .fontWeight(.semibold)
+                                    
+                                    Text("Book Mentor")
+                                        .font(.headline)
+                                        .fontWeight(.semibold)
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 16)
+                                .background(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color.teal, Color.teal.opacity(0.9)]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
                                 )
-                            )
-                            .cornerRadius(25)
-                            .shadow(color: Color.teal.opacity(0.3), radius: 8, x: 0, y: 4)
-                            .scaleEffect(isBooking ? 0.95 : 1.0)
-                            .opacity(isBooking ? 0.7 : 1.0)
-                            .animation(.easeInOut(duration: 0.1), value: isBooking)
+                                .cornerRadius(25)
+                                .shadow(color: Color.teal.opacity(0.3), radius: 8, x: 0, y: 4)
+                                .scaleEffect(isBooking ? 0.95 : 1.0)
+                                .opacity(isBooking ? 0.7 : 1.0)
+                                .animation(.easeInOut(duration: 0.1), value: isBooking)
+                            }
+                            .disabled(isBooking)
+                            .padding(.trailing, 20)
                         }
-                        .disabled(isBooking)
-                        .padding(.trailing, 20)
-                        
                     } else {
+                        // Profile redirection
                         Button(action: toProfile) {
                             HStack(spacing: 8) {
                                 Image(systemName: "person.badge.key")

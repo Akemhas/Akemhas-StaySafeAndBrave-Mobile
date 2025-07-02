@@ -21,7 +21,10 @@ class BookingAPIService: BaseAPIService {
     private struct Endpoints {
         static let bookings = "/bookings"
         static func userBookings(userID: UUID) -> String {
-            return "/bookings/\(userID.uuidString)"
+            return "/bookings/user/\(userID.uuidString)"
+        }
+        static func mentorBookings(mentorID: UUID) -> String {
+            return "/bookings/mentor/\(mentorID.uuidString)"
         }
         static func booking(id: UUID) -> String {
             return "/bookings/\(id.uuidString)"
@@ -60,6 +63,16 @@ class BookingAPIService: BaseAPIService {
         )
     }
     
+    func fetchMentorBookings(mentorID: UUID) async throws -> [BookingResponseDTO] {
+        print("Fetching bookings for user: \(mentorID.uuidString)")
+        
+        return try await performRequest(
+            endpoint: Endpoints.mentorBookings(mentorID: mentorID),
+            method: .GET,
+            responseType: [BookingResponseDTO].self
+        )
+    }
+
     /// Update an existing booking
     func updateBooking(id: UUID, data: BookingUpdateDTO) async throws -> BookingResponseDTO {
         print("Updating booking with ID: \(id.uuidString)")

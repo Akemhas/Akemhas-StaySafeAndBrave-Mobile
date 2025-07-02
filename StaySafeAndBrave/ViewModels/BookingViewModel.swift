@@ -61,6 +61,43 @@ final class BookingViewModel: ObservableObject {
           await currentTask?.value
       }
     
+    func fetchMentorBookings(mentorID: UUID) async {
+            // Cancel any existing request
+            currentTask?.cancel()
+            
+            currentTask = Task {
+                isLoading = true
+                errorMessage = nil
+                
+                do {
+                    print("Starting to fetch bookings for mentor: \(mentorID)")
+                    
+                    let fetchedBookings = try await bookingAPIService.fetchMentorBookings(mentorID: mentorID)
+                    
+                    // Check if task was cancelled
+                    guard !Task.isCancelled else { return }
+                    
+                    print("Successfully fetched \(fetchedBookings.count) bookings from API")
+                    
+                    bookings = fetchedBookings
+                    isLoading = false
+                } catch {
+                    guard !Task.isCancelled else { return }
+                    
+                    isLoading = false
+                    errorMessage = "Error fetching bookings: \(error.localizedDescription)"
+                    print("Error fetching bookings: \(error)")
+                    
+                    if let apiError = error as? APIError {
+                        print("API Error details: \(apiError.errorDescription ?? "Unknown")")
+                        errorMessage = apiError.errorDescription
+                    }
+                }
+            }
+            
+            await currentTask?.value
+        }
+    
     // MARK: - Create booking
     func createBooking(userID: UUID, mentorID: UUID, date: Date, description: String? = nil) async -> Bool {
         isLoading = true

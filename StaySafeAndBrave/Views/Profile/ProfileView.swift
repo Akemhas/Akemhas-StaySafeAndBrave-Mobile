@@ -53,15 +53,15 @@ struct ProfileView: View {
                                 .font(.headline)
                             Text(profile.birth_date!, style: .date)
                             
-                            Text("Languages")
-                                .font(.headline)
-                            printList(items: profile.languages!)
-                            
-                            Text("Hobbies")
-                                .font(.headline)
-                            printList(items: profile.hobbies!)
-                            
                             if profile.role == .mentor{
+                                
+                                Text("Languages")
+                                    .font(.headline)
+                                printList(items: profile.languages!)
+                                
+                                Text("Hobbies")
+                                    .font(.headline)
+                                printList(items: profile.hobbies!)
                                 
                                 Text("Rating")
                                     .font(.headline)
@@ -71,9 +71,7 @@ struct ProfileView: View {
                                     .font(.headline)
                                 Text(profile.city!.description)
                                 
-                                Text("Bio")
-                                    .font(.headline)
-                                Text(profile.bio!)
+                                
                                 
                             }
                             
@@ -98,6 +96,12 @@ struct ProfileView: View {
                             
                             Spacer()
                         }
+                        
+                    }
+                    if profile.role == .mentor{
+                        Text("Bio")
+                            .font(.headline).listRowSeparator(.hidden)
+                        Text(profile.bio!)
                     }
                 }
                 Divider()
@@ -220,24 +224,30 @@ struct ProfileView: View {
 }
 
 
-func printList<T: CustomStringConvertible & Identifiable>(items: [T])->some View{
-    HStack{
-        ForEach(items){item in
-            Text("\(item)")
-                .padding(.horizontal, 4)
-                .background{
+func printList<T: CustomStringConvertible & Identifiable>(items: [T]) -> some View {
+    let columns = [
+        GridItem(.adaptive(minimum: 80), spacing: 0)
+    ]
+
+    return LazyVGrid(columns: columns, spacing: 8) {
+        ForEach(items) { item in
+            Text(item.description)
+                .lineLimit(1)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
                     UnevenRoundedRectangle(
-                        topLeadingRadius:100,
-                        bottomLeadingRadius:100,
-                        bottomTrailingRadius:100,
-                        topTrailingRadius:100,
+                        topLeadingRadius: 100,
+                        bottomLeadingRadius: 100,
+                        bottomTrailingRadius: 100,
+                        topTrailingRadius: 100
                     )
                     .fill(Color(.systemGray6))
-                }
+                )
         }
     }
+    .padding(.horizontal, 4)
 }
-
 
 #Preview {
     ProfileView(activeTab: .constant(.profile), profile: .constant(Profile.testMentor))

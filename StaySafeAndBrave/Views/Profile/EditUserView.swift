@@ -18,7 +18,7 @@ struct EditUserView: View {
     @State private var password: String = ""
     @State private var cpassword: String = ""
     @State private var birth_date: Date = Date()
-    @State private var selectedLangauges: [AvailableLanguage] = []
+    @State private var selectedLanguages: [AvailableLanguage] = []
     @State private var selectedHobbies: [Hobby] = []
     
     @State private var city: City?
@@ -26,6 +26,9 @@ struct EditUserView: View {
     
     @State private var avatarItem: PhotosPickerItem?
     @State private var avatarImage: Image?
+    
+    private let userAPIService = UserAPIService.shared
+    private let mentorAPIService = MentorAPIService.shared
     
     
     var isValid: Bool {
@@ -80,7 +83,7 @@ struct EditUserView: View {
                 }.task(id: avatarItem) {
                     avatarImage = try? await avatarItem?.loadTransferable(type: Image.self)
                 }
-                
+
                 DisclosureGroup("Hobbies: \(selectedHobbies.map (\.rawValue.capitalized).joined(separator: ", "))"){
                     ForEach(Hobby.allCases) { item in
                         Toggle(isOn: Binding(
@@ -97,14 +100,14 @@ struct EditUserView: View {
                     }
                 }
                 
-                DisclosureGroup("Languages: \(selectedLangauges.map (\.rawValue.capitalized).joined(separator: ", "))"){
+                DisclosureGroup("Languages: \(selectedLanguages.map (\.rawValue.capitalized).joined(separator: ", "))"){
                     ForEach(AvailableLanguage.allCases) { item in
                         Toggle(isOn: Binding(
-                            get: {selectedLangauges.contains(item)},
+                            get: {selectedLanguages.contains(item)},
                             set: {isSelected in if isSelected{
-                                selectedLangauges.append(item)
+                                selectedLanguages.append(item)
                             }else{
-                                selectedLangauges.removeAll { $0 == item }
+                                selectedLanguages.removeAll { $0 == item }
                             }
                         }
                         )){
@@ -125,8 +128,35 @@ struct EditUserView: View {
             }
             
             Button{
-                profile = Profile.updateUser(_user_id: profile.user_id, _name: name, _email: email, _role: profile.role!, _birth_date: birth_date)
-                dismiss()
+                Task {
+                    do {
+                        profile = Profile.updateUser(_user_id: profile.user_id, _name: name, _email: email, _role: profile.role!, _birth_date: birth_date, _hobbies: selectedHobbies, _languages: selectedLanguages, _city: city!, _bio: bio, _rating: profile.rating!)
+                        
+                        if profile.role == .user{
+                            let userUpdateDTO = profile.toUserUpdateDTO()
+                            
+                            let userUpdateResponse = try await userAPIService.updateUser(id: UUID(uuidString: profile.user_id)!, data: userUpdateDTO)
+                            let authResponse = userUpdateResponse.toAuthResponse()
+                            await MainActor.run {
+                                if authResponse.isSuccess, let user = authResponse.user {
+                                    print("✅ Updated User successful for id: \(user.name ?? "Unknown User")")
+                                }
+                            }
+                        }else{
+                            let mentorUpdateDTO = profile.toMentorUpdateDTO()
+                            
+                            let mentorUpdateResponse = try await mentorAPIService.updateMentor(id: UUID(uuidString: profile.user_id)!, data: mentorUpdateDTO)
+                            let authResponse = mentorUpdateResponse.toMentorAuthResponse()
+                            await MainActor.run {
+                                if authResponse.isSuccess, let user = authResponse.user {
+                                    print("✅ Updated Mentor successful for id: \(user.name ?? "Unknown User")")
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                                dismiss()
             }
             label:{
                     Text("Save")
@@ -153,7 +183,7 @@ struct EditUserView: View {
             email = profile.email!
             birth_date = profile.birth_date!
             selectedHobbies = profile.hobbies!
-            selectedLangauges = profile.languages!
+            selectedLanguages = profile.languages!
             city = profile.city!
             bio = profile.bio!
         }

@@ -10,13 +10,19 @@ import Foundation
 
 struct UserResponseDTO: Codable {
     var id: UUID?
+    var mentorID: UUID?
     var name: String?
     var email: String?
     var role: String?
     var birth_date: String?
     var created_at: String?
     var updated_at: String?
-    
+    var profile_image: String?
+    var score: Float?
+    var bio: String?
+    var location: String?
+    var languages: [String]?
+    var hobbies: [String]?
     // MARK: - Computed Properties
     
     /// Convert birth_date string to Date
@@ -30,6 +36,24 @@ struct UserResponseDTO: Codable {
         guard let role = role else { return nil }
         return Role(rawValue: role)
     }
+    
+    var cityEnum: City? {
+        guard let location = location else { return nil }
+        return City(rawValue: location)
+    }
+    
+    var languageEnums: [AvailableLanguage] {
+        guard let languages = languages else { return [] }
+        return languages.compactMap(AvailableLanguage.init(rawValue:))
+    }
+    
+    var hobbyEnums: [Hobby] {
+        guard let hobbies = hobbies else { return [] }
+        return hobbies.compactMap(Hobby.init(rawValue:))
+    }
+    
+    
+    
 }
 
 // MARK: - Registration Response
@@ -117,12 +141,20 @@ struct UserUpdateDTO: Codable {
 extension UserResponseDTO {
     /// Convert backend response to frontend Profile
     func toProfile() -> Profile {
+
         return Profile(
             user_id: self.id?.uuidString ?? UUID().uuidString,
+            mentor_id: self.mentorID?.uuidString,
             name: self.name,
             email: self.email,
             role: self.roleEnum ?? .user,
-            birth_date: self.birthDateAsDate
+            birth_date: self.birthDateAsDate,
+            hobbies: self.hobbyEnums,
+            languages: self.languageEnums,
+            image: self.profile_image ?? "",
+            city: self.cityEnum ?? .dortmund,
+            bio: self.bio ?? "",
+            rating: self.score ?? 0.0,
         )
     }
     

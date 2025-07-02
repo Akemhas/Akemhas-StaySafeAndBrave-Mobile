@@ -45,6 +45,27 @@ struct MentorResponseDTO: Codable {
         guard let location = location else { return nil }
         return City(rawValue: location)
     }
+    
+    func toMentorAuthResponse() -> MentorAuthResponseDTO {
+        return MentorAuthResponseDTO(from: self)
+    }
+}
+
+struct MentorAuthResponseDTO: Codable {
+    var user: MentorResponseDTO?
+    var token: String? // If your backend uses JWT tokens
+    var message: String?
+    
+    var isSuccess: Bool {
+        return user != nil
+    }
+    
+    // For direct user response (like registration)
+    init(from userResponse: MentorResponseDTO) {
+        self.user = userResponse
+        self.token = nil
+        self.message = nil
+    }
 }
 
 // MARK: - Create DTO

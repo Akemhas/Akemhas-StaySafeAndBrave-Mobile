@@ -3,7 +3,7 @@
 //  StaySafeAndBrave
 //
 //  Created by Sarmiento Castrillon, Clein Alexander on 28.05.25.
-//
+// Created initially to test main functionality of Mentorviews without the Backend. It is not being used right now.
 
 import Foundation
 import SwiftData
@@ -185,7 +185,7 @@ Also, wenn du neugierig auf Dortmund bist und Lust hast, die Stadt mit einem Loc
 }
 
 
-
+/// Links of the profile pictures available in Sciebo
 enum sampleImagesURL: String {
     case nomusaURL = "https://hochschule-rhein-waal.sciebo.de/s/zKzF7MWJatLpR5P/download"
     case peterURL = "https://hochschule-rhein-waal.sciebo.de/s/nAYqHcmd6zFeG5Y/download"

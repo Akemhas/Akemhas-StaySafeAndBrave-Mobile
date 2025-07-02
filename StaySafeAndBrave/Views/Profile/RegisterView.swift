@@ -17,11 +17,17 @@ struct RegisterView: View {
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var cpassword: String = ""
+    @State private var avatarImage: Image?
+    @State private var avatarItem: PhotosPickerItem?
     @State private var birth_date: Date = {
         // Default to 25 years ago (reasonable adult age)
         let calendar = Calendar.current
         return calendar.date(byAdding: .year, value: -25, to: Date()) ?? Date()
     }()
+
+    @State private var selectedLanguages: [AvailableLanguage] = []
+    @State private var selectedHobbies: [Hobby] = []
+    @State private var selectedCity: City = .dortmund
     @State private var selectedRole: Role = .user
     
     // API integration states
@@ -33,6 +39,7 @@ struct RegisterView: View {
     @State private var showingSuccess = false
     
     private let userAPIService = UserAPIService.shared
+    private let mentorAPIService = MentorAPIService.shared
     
     var isValid: Bool {
         let basicFieldsValid = ![name, email, password, cpassword].contains(where: \.isEmpty)
@@ -124,7 +131,65 @@ struct RegisterView: View {
                 .padding(.top, 4)
             }
             
-            // Debug section
+            // Simple Role Toggle
+            Section("Account Type") {
+                Picker("Role", selection: $selectedRole) {
+                    Text("User").tag(Role.user)
+                    Text("Mentor").tag(Role.mentor)
+                }
+                .pickerStyle(.segmented)
+            }
+            
+            VStack{
+                PhotosPicker("Select Profile Picture", selection: $avatarItem, matching: .images)
+                
+                avatarImage?.resizable()
+                    .frame(width: 300, height: 300)
+                    .scaledToFit()
+                    .cornerRadius(400)
+            }.task(id: avatarItem) {
+                avatarImage = try? await avatarItem?.loadTransferable(type: Image.self)
+            }
+            if selectedRole == .mentor{
+            DisclosureGroup("Hobbies: \(selectedHobbies.map (\.rawValue.capitalized).joined(separator: ", "))"){
+                ForEach(Hobby.allCases) { item in
+                    Toggle(isOn: Binding(
+                        get: {selectedHobbies.contains(item)},
+                        set: {isSelected in if isSelected{
+                            selectedHobbies.append(item)
+                        }else{
+                            selectedHobbies.removeAll { $0 == item }
+                        }
+                        }
+                    )){
+                        Text(item.rawValue.capitalized)
+                    }
+                }
+            }
+            
+            DisclosureGroup("Languages: \(selectedLanguages.map (\.rawValue.capitalized).joined(separator: ", "))"){
+                ForEach(AvailableLanguage.allCases) { item in
+                    Toggle(isOn: Binding(
+                        get: {selectedLanguages.contains(item)},
+                        set: {isSelected in if isSelected{
+                            selectedLanguages.append(item)
+                        }else{
+                            selectedLanguages.removeAll { $0 == item }
+                        }
+                        }
+                    )){
+                        Text(item.rawValue.capitalized)
+                    }
+                }
+            }
+                
+                Picker(selection: $selectedCity, label: Text("City:")) {
+                    ForEach(City.allCases){ city in
+                        Text("\(city.description)").tag(city)
+                    }
+                }
+        }
+            
             #if DEBUG
             Section("Debug") {
                 Toggle("Use API", isOn: $useAPI)
@@ -217,6 +282,8 @@ struct RegisterView: View {
                 _email: email,
                 _role: selectedRole,
                 _birth_date: birth_date,
+                _hobbies: selectedHobbies,
+                _languages: selectedLanguages
             )
             successMessage = "Account created locally"
             showingSuccess = true
@@ -246,11 +313,11 @@ struct RegisterView: View {
                     if authResponse.isSuccess, let user = authResponse.user {
                         print("Registration successful for user: \(user.name ?? "Unknown")")
                         
-                        print("DEBUG: User ID from response: \(user.id?.uuidString ?? "NIL")")
-                        print("DEBUG: Selected role: \(selectedRole)")
-                        print("DEBUG: User role from response: \(user.role ?? "NIL")")
-                        
-                        let newProfile = user.toProfile()
+                        // Create profile from API response
+                        var newProfile = user.toProfile()
+                        newProfile.hobbies = selectedHobbies
+                        newProfile.languages = selectedLanguages
+                        newProfile.city = selectedCity
                         
                         profile = newProfile
                         // Profile will be automatically saved due to onChange in MainView
@@ -262,6 +329,25 @@ struct RegisterView: View {
                         print("❌ Registration failed: \(authResponse.message ?? "Unknown error")")
                         errorMessage = authResponse.message ?? "Registration failed - please try again"
                         showingError = true
+                    }
+                }
+                if selectedRole == .mentor {
+                    let createMentorDTO = MentorCreateDTO(
+                        userID: UUID(uuidString: profile.user_id)!,
+                        profile_image: profile.image,
+                        score: profile.rating,
+                        birth_date: profile.birth_date,
+                        bio: profile.bio,
+                        languages: profile.languages,
+                        hobbies: profile.hobbies,
+                        location: profile.city
+                        )
+                    let mentorCreationResponse = try  await mentorAPIService.createMentor(data: createMentorDTO)
+                    await MainActor.run {
+                        if authResponse.isSuccess, let id = mentorCreationResponse.id {
+                            profile.mentor_id = id.uuidString
+                            print("✅ Created Mentor successful for id: \(id.uuidString)")
+                        }
                     }
                 }
                 

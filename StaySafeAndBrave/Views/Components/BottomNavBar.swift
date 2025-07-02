@@ -19,7 +19,9 @@ struct BottomNavBar: View {
         HStack {
             ForEach(ActiveTab.allCases, id: \.self) { tab in
                 Button {
-                    action(tab)
+                    if(tab != .chat && tab != .diary){
+                        action(tab)
+                    }
                 } label: {
                     VStack {
                         tab.icon

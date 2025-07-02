@@ -64,55 +64,9 @@ struct BookingView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            SearchBar(
-                searchText: $searchText,
-                placeholder: "Search Bookings...",
-                onFilter: {},
-                onSearch: applySearch,
-                showDebugButton: false,
-                showFilterButton: false,
-                onDebugButton: {}
-            )
-            
-            if !bookingViewModel.bookings.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(BookingFilter.allCases, id: \.self) { filter in
-                            FilterPill(
-                                text: filter.rawValue,
-                                isSelected: selectedFilter == filter
-                            ) {
-                                selectedFilter = filter
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-                .padding(.vertical, 8)
-            }
-            
-            if bookingViewModel.isLoading {
-                Spacer()
-                ProgressView("Loading bookings...")
-                    .font(.headline)
-                Spacer()
-            } else if filteredBookings.isEmpty {
-                EmptyBookingsView(filter: selectedFilter)
-            } else {
-                List(filteredBookings, id: \.id) { booking in
-                    BookingRow(booking: booking) {
-                        // Set the selected booking - this will trigger the sheet
-                        selectedBooking = booking
-                    }
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(.init(top: 8, leading: 16, bottom: 8, trailing: 16))
-                }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .refreshable {
-                    await refreshBookings()
-                }
-            }
+            searchSection
+            filterSection
+            contentSection
         }
         .navigationTitle("My Bookings")
         .navigationBarTitleDisplayMode(.large)
@@ -135,22 +89,96 @@ struct BookingView: View {
         .sheet(item: $selectedBooking, onDismiss: {
             selectedBooking = nil
         }) { booking in
-            BookingDetailView(booking: booking){
+            BookingDetailView(booking: booking, currentUserProfile: profile){
                 Task{
                     await loadBookings()
                 }
             }
         }
     }
-    
-    private func loadBookings() async {
-        guard let userID = UUID(uuidString: profile.user_id) else {
-            print("Invalid user ID: \(profile.user_id)")
-            return
-        }
-        
-        await bookingViewModel.fetchUserBookings(userID: userID)
+
+    private var searchSection: some View {
+        SearchBar(
+            searchText: $searchText,
+            placeholder: "Search Bookings...",
+            onFilter: {},
+            onSearch: applySearch,
+            showDebugButton: false,
+            showFilterButton: false,
+            onDebugButton: {}
+        )
     }
+
+    private var filterSection: some View {
+        Group {
+            if !bookingViewModel.bookings.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(BookingFilter.allCases, id: \.self) { filter in
+                            FilterPill(
+                                text: filter.rawValue,
+                                isSelected: selectedFilter == filter
+                            ) {
+                                selectedFilter = filter
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                .padding(.vertical, 8)
+            }
+        }
+    }
+
+    private var contentSection: some View {
+        Group {
+            if bookingViewModel.isLoading {
+                Spacer()
+                ProgressView("Loading bookings...")
+                    .font(.headline)
+                Spacer()
+            } else if filteredBookings.isEmpty {
+                EmptyBookingsView(filter: selectedFilter)
+            } else {
+                bookingsList
+            }
+        }
+    }
+
+    private var bookingsList: some View {
+        List(filteredBookings, id: \.id) { booking in
+            BookingRow(booking: booking) {
+                selectedBooking = booking
+            }
+            .listRowSeparator(.hidden)
+            .listRowInsets(.init(top: 8, leading: 16, bottom: 8, trailing: 16))
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .refreshable {
+            await refreshBookings()
+        }
+    }
+
+    private func loadBookings() async {
+            guard let userID = UUID(uuidString: profile.user_id) else {
+                print("Invalid user ID: \(profile.user_id)")
+                return
+            }
+            
+        print("profile role = \(profile.role?.rawValue)")
+            if profile.role == .mentor {
+                if let mentorIDString = profile.mentor_id,
+                   let mentorID = UUID(uuidString: mentorIDString) {
+                    print("Fetching mentor bookings for mentorID: \(mentorID)")
+                    await bookingViewModel.fetchMentorBookings(mentorID: mentorID)
+                }
+            } else {
+                print("Fetching user bookings for userID: \(userID)")
+                await bookingViewModel.fetchUserBookings(userID: userID)
+            }
+        }
+    
     
     private func refreshBookings() async {
         await loadBookings()

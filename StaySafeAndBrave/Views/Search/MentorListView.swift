@@ -3,7 +3,8 @@
 //  StaySafeAndBrave
 //
 //  Created by Sarmiento Castrillon, Clein Alexander on 06.06.25.
-//
+// This view is needed to perform the sorting/filtering
+
 import SwiftData
 import SwiftUI
 
@@ -25,7 +26,7 @@ struct MentorListView: View {
             .scrollContentBackground(.hidden)
         }
     }
-    
+    /// The initializer receives the sortdescriptor and the filtering options. Also the bindings of profile and activetab for the redirection.
     init(sort: SortDescriptor<Mentor>,
          searchText: String = "",
          selectedCity: String? = nil,
@@ -67,7 +68,7 @@ struct MentorListView: View {
             predicates.append(languagePredicate)
         }
         
-       
+        
         
         // Score range filter
         let scorePredicate = #Predicate<Mentor> { mentor in
