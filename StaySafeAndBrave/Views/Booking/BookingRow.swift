@@ -4,7 +4,6 @@
 //
 //  Created by Akif Emre Bozdemir on 7/1/25.
 //
-
 import SwiftUI
 import SwiftData
 
@@ -21,7 +20,7 @@ struct BookingRow: View {
                 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        Text("Booking")
+                        Text("Booking with \(booking.displayName)")
                             .font(.headline)
                             .foregroundStyle(.primary)
                         
@@ -42,6 +41,10 @@ struct BookingRow: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
+                    
+                    Text(booking.displayLocation)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                     
                     if let description = booking.description, !description.isEmpty {
                         Text(description)

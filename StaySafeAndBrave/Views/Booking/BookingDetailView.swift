@@ -10,7 +10,7 @@ import SwiftData
 
 struct BookingDetailView: View {
     let booking: BookingResponseDTO
-    let currentUserProfile: Profile // Add this to pass the current user's profile
+    let currentUserProfile: Profile
     var onDismiss: (() -> Void)? = nil
     @StateObject private var bookingViewModel = BookingViewModel()
 
@@ -24,158 +24,17 @@ struct BookingDetailView: View {
     @State private var showingErrorAlert = false
     @State private var errorMessage: String?
     
-    // Reschedule states
     @State private var newDate = Date()
-    @State private var rescheduleMessage = ""
-    
-    // Dummy data - replace with API calls when backend is ready
-    private let dummyMentorName = "John Doe"
-    private let dummyMentorLocation = "Cape Town"
-    private let dummyMentorImage = "https://hochschule-rhein-waal.sciebo.de/s/zKzF7MWJatLpR5P/download"
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Header Card
-                    VStack(spacing: 16) {
-                        HStack {
-                            // Mentor Image
-                            AsyncImage(url: URL(string: dummyMentorImage)) { image in
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                            } placeholder: {
-                                ProgressView()
-                                    .frame(width: 80, height: 80)
-                            }
-                            .frame(width: 80, height: 80)
-                            .clipShape(Circle())
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Booking with")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                
-                                Text(dummyMentorName)
-                                    .font(.title2)
-                                    .fontWeight(.semibold)
-                                
-                                HStack {
-                                    Image(systemName: "location")
-                                        .foregroundColor(.secondary)
-                                        .font(.caption)
-                                    Text(dummyMentorLocation)
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            
-                            Spacer()
-                        }
-                        
-                        // Status Badge
-                        HStack {
-                            Spacer()
-                            StatusBadge(status: booking.status ?? "unknown")
-                        }
-                    }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
+                    headerCard
+                    bookingDetailsCard
                     
-                    // Booking Details Card
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Booking Details")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                        
-                        VStack(spacing: 12) {
-                            DetailRow(
-                                icon: "calendar",
-                                title: "Date & Time",
-                                value: booking.dateDisplay ?? "No date specified"
-                            )
-                            
-                            DetailRow(
-                                icon: "mappin.and.ellipse",
-                                title: "Location",
-                                value: dummyMentorLocation
-                            )
-                            
-                            DetailRow(
-                                icon: "person.circle",
-                                title: "Booking ID",
-                                value: booking.id?.uuidString.prefix(8).uppercased() ?? "Unknown"
-                            )
-                            
-                            if let description = booking.description, !description.isEmpty {
-                                DetailRow(
-                                    icon: "text.alignleft",
-                                    title: "Description",
-                                    value: description
-                                )
-                            }
-                        }
-                    }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
-                    
-                    // Action Buttons - Role-based
-                    if booking.status?.lowercased() == "pending" {
-                        VStack(spacing: 12) {
-                            // Cancel button - available for both users and mentors
-                            Button(action: {
-                                showingCancelAlert = true
-                            }) {
-                                HStack {
-                                    Image(systemName: "xmark.circle")
-                                    Text("Cancel Booking")
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.red)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
-                            }
-                            .disabled(isUpdating)
-                            
-                            // Role-specific buttons
-                            if currentUserProfile.role == .mentor {
-                                // Accept button - only for mentors
-                                Button(action: {
-                                    showingAcceptAlert = true
-                                }) {
-                                    HStack {
-                                        Image(systemName: "checkmark.circle")
-                                        Text("Accept Booking")
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.green)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(10)
-                                }
-                                .disabled(isUpdating)
-                            } else {
-                                // Reschedule button - only for regular users
-                                Button(action: {
-                                    showingRescheduleSheet = true
-                                }) {
-                                    HStack {
-                                        Image(systemName: "calendar.badge.clock")
-                                        Text("Reschedule")
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.blue)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(10)
-                                }
-                                .disabled(isUpdating)
-                            }
-                        }
+                    if booking.isPending {
+                        actionButtons
                     }
                     
                     Spacer(minLength: 100)
@@ -220,6 +79,150 @@ struct BookingDetailView: View {
         }
         .sheet(isPresented: $showingRescheduleSheet) {
             rescheduleBookingView
+        }
+    }
+    
+    private var headerCard: some View {
+        VStack(spacing: 16) {
+            HStack {
+                AsyncImage(url: URL(string: booking.displayImage)) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    ProgressView()
+                        .frame(width: 80, height: 80)
+                }
+                .frame(width: 80, height: 80)
+                .clipShape(Circle())
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Booking with")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    Text(booking.mentorName ?? "Unknown Mentor")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                    
+                    HStack {
+                        Image(systemName: "location")
+                            .foregroundColor(.secondary)
+                            .font(.caption)
+                        Text(booking.displayLocation)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Spacer()
+            }
+            
+            HStack {
+                Spacer()
+                StatusBadge(status: booking.status ?? "unknown")
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+    }
+    
+    private var bookingDetailsCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Booking Details")
+                .font(.headline)
+                .fontWeight(.semibold)
+            
+            VStack(spacing: 12) {
+                DetailRow(
+                    icon: "calendar",
+                    title: "Date & Time",
+                    value: booking.dateDisplay ?? "No date specified"
+                )
+                
+                DetailRow(
+                    icon: "mappin.and.ellipse",
+                    title: "Location",
+                    value: booking.displayLocation
+                )
+                
+                DetailRow(
+                    icon: "person.circle",
+                    title: "Booking ID",
+                    value: booking.id?.uuidString.prefix(8).uppercased() ?? "Unknown"
+                )
+                
+                DetailRow(
+                    icon: "person.2",
+                    title: currentUserProfile.role == .mentor ? "Student" : "Mentor",
+                    value: currentUserProfile.role == .mentor ?
+                        (booking.userName ?? "Unknown User") :
+                        (booking.mentorName ?? "Unknown Mentor")
+                )
+                
+                if let description = booking.description, !description.isEmpty {
+                    DetailRow(
+                        icon: "text.alignleft",
+                        title: "Description",
+                        value: description
+                    )
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+    }
+    
+    private var actionButtons: some View {
+        VStack(spacing: 12) {
+            Button(action: {
+                showingCancelAlert = true
+            }) {
+                HStack {
+                    Image(systemName: "xmark.circle")
+                    Text("Cancel Booking")
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.red)
+                .foregroundColor(.white)
+                .cornerRadius(10)
+            }
+            .disabled(isUpdating)
+            
+            if currentUserProfile.role == .mentor {
+                Button(action: {
+                    showingAcceptAlert = true
+                }) {
+                    HStack {
+                        Image(systemName: "checkmark.circle")
+                        Text("Accept Booking")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.green)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                .disabled(isUpdating)
+            } else {
+                Button(action: {
+                    showingRescheduleSheet = true
+                }) {
+                    HStack {
+                        Image(systemName: "calendar.badge.clock")
+                        Text("Reschedule")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                .disabled(isUpdating)
+            }
         }
     }
     
@@ -287,6 +290,7 @@ struct BookingDetailView: View {
                 isUpdating = false
                 if success {
                     dismiss()
+                    onDismiss?()
                 } else {
                     errorMessage = bookingViewModel.errorMessage ?? "Failed to cancel booking"
                     showingErrorAlert = true
@@ -307,7 +311,6 @@ struct BookingDetailView: View {
         Task {
             let success = await bookingViewModel.updateBooking(
                 id: bookingId,
-                date: booking.date != nil ? DateFormatter().date(from: booking.date!) ?? Date() : Date(),
                 status: "accepted"
             )
             
@@ -315,7 +318,7 @@ struct BookingDetailView: View {
                 isUpdating = false
                 if success {
                     dismiss()
-                    onDismiss?() // Call this to notify BookingView to update its content
+                    onDismiss?()
                 } else {
                     errorMessage = bookingViewModel.errorMessage ?? "Failed to accept booking"
                     showingErrorAlert = true
@@ -337,20 +340,20 @@ struct BookingDetailView: View {
             let success = await bookingViewModel.updateBooking(
                 id: bookingId,
                 date: newDate,
-                status: "pending" // Reset to pending after reschedule
+                status: "pending"
             )
             
             await MainActor.run {
-                  isUpdating = false
-                  if success {
-                      showingRescheduleSheet = false
-                      dismiss()
-                      onDismiss?() // Call this to notify BookingView to update it's content
-                  } else {
-                      errorMessage = bookingViewModel.errorMessage ?? "Failed to reschedule booking"
-                      showingErrorAlert = true
-                  }
-              }
+                isUpdating = false
+                if success {
+                    showingRescheduleSheet = false
+                    dismiss()
+                    onDismiss?()
+                } else {
+                    errorMessage = bookingViewModel.errorMessage ?? "Failed to reschedule booking"
+                    showingErrorAlert = true
+                }
+            }
         }
     }
 }
@@ -418,6 +421,10 @@ struct StatusBadge: View {
             id: UUID(),
             userID: UUID(),
             mentorID: UUID(),
+            userName: "John Doe",
+            mentorName: "Jane Smith",
+            mentorLocation: "Cape Town",
+            mentorImage: "https://example.com/image.jpg",
             date: "30/06/2025",
             status: "pending",
             description: "Looking forward to meeting you!"

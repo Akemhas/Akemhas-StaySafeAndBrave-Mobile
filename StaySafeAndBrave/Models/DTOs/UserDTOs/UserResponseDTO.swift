@@ -1,14 +1,14 @@
 //
-//  UserDTO.swift
+//  UserResponseDTO.swift
 //  StaySafeAndBrave
 //
-//  Created by Akif Emre Bozdemir on 6/28/25.
+//  Created by Akif Emre Bozdemir on 7/3/25.
+//
 
 import Foundation
 
-// MARK: - User Response DTO
-
-struct UserResponseDTO: Codable {
+// MARK: - Main User Response DTO
+struct UserResponseDTO: Codable, Identifiable {
     var id: UUID?
     var mentorID: UUID?
     var name: String?
@@ -23,6 +23,7 @@ struct UserResponseDTO: Codable {
     var location: String?
     var languages: [String]?
     var hobbies: [String]?
+    
     // MARK: - Computed Properties
     
     /// Convert birth_date string to Date
@@ -52,17 +53,33 @@ struct UserResponseDTO: Codable {
         return hobbies.compactMap(Hobby.init(rawValue:))
     }
     
+    var displayName: String {
+        return name ?? "Unknown User"
+    }
     
+    var displayEmail: String {
+        return email ?? "No email"
+    }
     
+    var displayRole: String {
+        return role?.capitalized ?? "User"
+    }
+    
+    var displayLocation: String {
+        return location ?? "Unknown Location"
+    }
+    
+    var displayBio: String {
+        return bio ?? "No bio available"
+    }
+    
+    var displayScore: String {
+        guard let score = score else { return "0.0" }
+        return String(format: "%.1f", score)
+    }
 }
 
-// MARK: - Registration Response
-
-typealias RegistrationResponseDTO = UserResponseDTO
-
 // MARK: - Auth Response DTO
-
-/// Response DTO for authentication (login)
 struct AuthResponseDTO: Codable {
     var user: UserResponseDTO?
     var token: String?
@@ -72,7 +89,6 @@ struct AuthResponseDTO: Codable {
         return user != nil
     }
     
-    // For direct user response (like registration)
     init(from userResponse: UserResponseDTO) {
         self.user = userResponse
         self.token = nil
@@ -80,68 +96,58 @@ struct AuthResponseDTO: Codable {
     }
 }
 
-// MARK: - User Registration DTO
-
-/// DTO for registering new users
-struct UserRegistrationDTO: Codable {
-    var name: String
-    var email: String
-    var password: String
-    var role: String
+// MARK: - Combined User + Mentor Response DTO
+struct UserMentorDTO: Codable {
+    var id: UUID?
+    var mentorID: UUID?
+    var name: String?
+    var email: String?
+    var password: String?
+    var role: String?
     var birth_date: String?
-    
-    // MARK: - Initializers
-    
-    init(name: String, email: String, password: String, role: Role, birth_date: Date? = nil) {
-        self.name = name
-        self.email = email
-        self.password = password
-        self.role = role.rawValue
-        self.birth_date = birth_date?.apiString
-    }
-    
-    /// Direct initializer with backend-compatible types
-    init(name: String, email: String, password: String, role: String, birth_date: String? = nil) {
+    var location: String?
+    var bio: String?
+    var profile_image: String?
+    var score: Float?
+    var languages: [String]?
+    var hobbies: [String]?
+
+    init(
+        id: UUID? = nil,
+        mentorID: UUID? = nil,
+        name: String? = nil,
+        email: String? = nil,
+        password: String? = nil,
+        role: String? = nil,
+        birth_date: String? = nil,
+        location: String? = nil,
+        bio: String? = nil,
+        profile_image: String? = nil,
+        score: Float? = nil,
+        languages: [String]? = nil,
+        hobbies: [String]? = nil
+    ) {
+        self.id = id
+        self.mentorID = mentorID
         self.name = name
         self.email = email
         self.password = password
         self.role = role
         self.birth_date = birth_date
+        self.location = location
+        self.bio = bio
+        self.profile_image = profile_image
+        self.score = score
+        self.languages = languages
+        self.hobbies = hobbies
     }
 }
 
-// MARK: - User Login DTO
-
-/// DTO for user login
-struct UserLoginDTO: Codable {
-    var email: String
-    var password: String
-}
-
-// MARK: - User Update DTO
-
-/// DTO for updating user information
-struct UserUpdateDTO: Codable {
-    var name: String?
-    var email: String?
-    var birth_date: String?
-    
-    // MARK: - Initializers
-    
-    /// Main initializer that accepts frontend types
-    init(name: String? = nil, email: String? = nil, birth_date: Date? = nil) {
-        self.name = name
-        self.email = email
-        self.birth_date = birth_date?.apiString
-    }
-}
-
-// MARK: - Conversion Extensions
+// MARK: - Conversion Extensions (FROM UserResponseDTO TO other types)
 
 extension UserResponseDTO {
     /// Convert backend response to frontend Profile
     func toProfile() -> Profile {
-
         return Profile(
             user_id: self.id?.uuidString ?? UUID().uuidString,
             mentor_id: self.mentorID?.uuidString,
@@ -154,7 +160,7 @@ extension UserResponseDTO {
             image: self.profile_image ?? "",
             city: self.cityEnum ?? .dortmund,
             bio: self.bio ?? "",
-            rating: self.score ?? 0.0,
+            rating: self.score ?? 0.0
         )
     }
     
@@ -164,24 +170,5 @@ extension UserResponseDTO {
     }
 }
 
-extension Profile {
-    /// Convert frontend Profile to backend registration DTO
-    func toRegistrationDTO(password: String) -> UserRegistrationDTO {
-        return UserRegistrationDTO(
-            name: self.name ?? "",
-            email: self.email ?? "",
-            password: password,
-            role: self.role ?? .user,
-            birth_date: self.birth_date
-        )
-    }
-    
-    /// Convert frontend Profile to backend update DTO
-    func toUpdateDTO() -> UserUpdateDTO {
-        return UserUpdateDTO(
-            name: self.name,
-            email: self.email,
-            birth_date: self.birth_date
-        )
-    }
-}
+// MARK: - Type Aliases for Compatibility
+typealias RegistrationResponseDTO = UserResponseDTO

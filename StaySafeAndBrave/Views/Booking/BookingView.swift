@@ -166,7 +166,6 @@ struct BookingView: View {
                 return
             }
             
-        print("profile role = \(profile.role?.rawValue)")
             if profile.role == .mentor {
                 if let mentorIDString = profile.mentor_id,
                    let mentorID = UUID(uuidString: mentorIDString) {
@@ -190,5 +189,5 @@ struct BookingView: View {
 
 #Preview {
     BookingView(profile: Profile.testMentor)
-        .modelContainer(for: [Mentor.self, Booking.self], inMemory: true)
+        .modelContainer(for: [Mentor.self], inMemory: true)
 }

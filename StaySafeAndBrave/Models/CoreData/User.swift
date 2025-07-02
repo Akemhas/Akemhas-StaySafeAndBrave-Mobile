@@ -14,7 +14,7 @@ final class User {
     var name: String
     var email: String
     var password: String
-    var role: UserRole
+    var role: Role
     var created_at: Date
     var birth_date: Date
     
@@ -23,7 +23,7 @@ final class User {
         name: String,
         email: String,
         password: String,
-        role: UserRole,
+        role: Role,
         created_at: Date = Date(),
         birth_date: Date,
     ) {
@@ -37,7 +37,25 @@ final class User {
     }
 }
 
-enum UserRole: String, Codable {
-    case user
-    case mentor
+// MARK: - API Conversion Extensions (FROM User TO other types)
+extension User {
+    /// Convert SwiftData model to registration DTO
+    func toRegistrationDTO(password: String) -> UserRegistrationDTO {
+        return UserRegistrationDTO(
+            name: self.name,
+            email: self.email,
+            password: password,
+            role: self.role,
+            birth_date: self.birth_date
+        )
+    }
+    
+    /// Convert SwiftData model to update DTO
+    func toUpdateDTO() -> UserUpdateDTO {
+        return UserUpdateDTO(
+            name: self.name,
+            email: self.email,
+            birth_date: self.birth_date
+        )
+    }
 }
