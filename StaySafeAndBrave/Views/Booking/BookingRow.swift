@@ -42,7 +42,7 @@ struct BookingRow: View {
                             .foregroundStyle(.secondary)
                     }
                     
-                    Text(booking.displayLocation)
+                    Text(City.getDisplayName(for: booking.displayLocation))
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                     

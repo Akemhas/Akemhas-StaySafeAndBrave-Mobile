@@ -101,7 +101,9 @@ struct BookingDetailView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
-                    Text(booking.mentorName ?? "Unknown Mentor")
+                    let otherPersonName = currentUserProfile.role == .user ? booking.mentorName ?? "Unknown Mentor" : booking.userName ?? "Unknown User"
+                    
+                    Text(otherPersonName)
                         .font(.title2)
                         .fontWeight(.semibold)
                     
@@ -109,7 +111,7 @@ struct BookingDetailView: View {
                         Image(systemName: "location")
                             .foregroundColor(.secondary)
                             .font(.caption)
-                        Text(booking.displayLocation)
+                        Text(City.getDisplayName(for: booking.displayLocation))
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -144,7 +146,8 @@ struct BookingDetailView: View {
                 DetailRow(
                     icon: "mappin.and.ellipse",
                     title: "Location",
-                    value: booking.displayLocation
+                    value: City.getDisplayName(for: booking.displayLocation)
+
                 )
                 
                 DetailRow(
@@ -155,7 +158,7 @@ struct BookingDetailView: View {
                 
                 DetailRow(
                     icon: "person.2",
-                    title: currentUserProfile.role == .mentor ? "Student" : "Mentor",
+                    title: currentUserProfile.role == .mentor ? "Customer" : "Mentor",
                     value: currentUserProfile.role == .mentor ?
                         (booking.userName ?? "Unknown User") :
                         (booking.mentorName ?? "Unknown Mentor")
@@ -176,54 +179,118 @@ struct BookingDetailView: View {
     }
     
     private var actionButtons: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
+            // Cancel Button
             Button(action: {
                 showingCancelAlert = true
             }) {
-                HStack {
-                    Image(systemName: "xmark.circle")
+                HStack(spacing: 12) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                    
                     Text("Cancel Booking")
+                        .font(.headline)
+                        .fontWeight(.semibold)
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.red)
                 .foregroundColor(.white)
-                .cornerRadius(10)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.red, Color.red.opacity(0.8)]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(16)
+                .shadow(color: Color.red.opacity(0.3), radius: 8, x: 0, y: 4)
+                .scaleEffect(isUpdating ? 0.95 : 1.0)
+                .opacity(isUpdating ? 0.7 : 1.0)
+                .animation(.easeInOut(duration: 0.1), value: isUpdating)
             }
             .disabled(isUpdating)
             
             if currentUserProfile.role == .mentor {
+                // Accept Button (for mentors)
                 Button(action: {
                     showingAcceptAlert = true
                 }) {
-                    HStack {
-                        Image(systemName: "checkmark.circle")
+                    HStack(spacing: 12) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                        
                         Text("Accept Booking")
+                            .font(.headline)
+                            .fontWeight(.semibold)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.green)
                     .foregroundColor(.white)
-                    .cornerRadius(10)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.green, Color.green.opacity(0.8)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(16)
+                    .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
+                    .scaleEffect(isUpdating ? 0.95 : 1.0)
+                    .opacity(isUpdating ? 0.7 : 1.0)
+                    .animation(.easeInOut(duration: 0.1), value: isUpdating)
                 }
                 .disabled(isUpdating)
+                
             } else {
+                // Reschedule Button (for users)
                 Button(action: {
                     showingRescheduleSheet = true
                 }) {
-                    HStack {
+                    HStack(spacing: 12) {
                         Image(systemName: "calendar.badge.clock")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                        
                         Text("Reschedule")
+                            .font(.headline)
+                            .fontWeight(.semibold)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
                     .foregroundColor(.white)
-                    .cornerRadius(10)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.8)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(16)
+                    .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                    .scaleEffect(isUpdating ? 0.95 : 1.0)
+                    .opacity(isUpdating ? 0.7 : 1.0)
+                    .animation(.easeInOut(duration: 0.1), value: isUpdating)
                 }
                 .disabled(isUpdating)
             }
+            
+            // Loading state overlay
+            if isUpdating {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .tint(.gray)
+                    
+                    Text("Updating...")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                }
+                .padding(.top, 8)
+            }
         }
+        .padding(.horizontal, 20)
     }
     
     private var rescheduleBookingView: some View {
@@ -423,7 +490,7 @@ struct StatusBadge: View {
             mentorID: UUID(),
             userName: "John Doe",
             mentorName: "Jane Smith",
-            mentorLocation: "Cape Town",
+            mentorLocation: "capetown",
             mentorImage: "https://example.com/image.jpg",
             date: "30/06/2025",
             status: "pending",

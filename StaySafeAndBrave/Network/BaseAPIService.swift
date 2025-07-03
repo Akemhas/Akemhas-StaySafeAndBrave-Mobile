@@ -120,16 +120,27 @@ class BaseAPIService: ObservableObject {
         let request = createRequest(endpoint: endpoint, method: method, body: body)
         
         do {
+            print("🚀 Making request to: \(request.url?.absoluteString ?? "unknown")")
+            
+            // Use shared URLSession (revert the configuration change)
             let (data, response) = try await URLSession.shared.data(for: request)
+            
+            print("✅ Received response, data size: \(data.count) bytes")
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("📄 Response data: \(responseString)")
+            }
+            
             return try handleResponse(responseType, data: data, response: response)
         } catch let urlError as URLError {
-            print("Network error: \(urlError)")
+            print("❌ Network error: \(urlError)")
+            print("❌ Error code: \(urlError.code.rawValue)")
+            print("❌ Error description: \(urlError.localizedDescription)")
             throw APIError.networkError(urlError)
         } catch let apiError as APIError {
-            print("API error: \(apiError)")
+            print("❌ API error: \(apiError)")
             throw apiError
         } catch {
-            print("Unknown error: \(error)")
+            print("❌ Unknown error: \(error)")
             throw APIError.unknown(error)
         }
     }

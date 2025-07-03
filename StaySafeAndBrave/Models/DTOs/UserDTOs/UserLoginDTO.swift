@@ -15,7 +15,7 @@ struct UserLoginDTO: Codable {
     // MARK: - Initializers
     
     init(email: String, password: String) {
-        self.email = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        self.email = email.trimmingCharacters(in: .whitespacesAndNewlines)
         self.password = password
     }
 }

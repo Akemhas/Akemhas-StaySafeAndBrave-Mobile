@@ -18,7 +18,7 @@ struct EmptyBookingsView: View {
                 .foregroundColor(.gray)
             
             VStack(spacing: 8) {
-                Text("No \(filter.rawValue.lowercased()) bookings")
+                Text("No Bookings")
                     .font(.title2)
                     .fontWeight(.semibold)
                 
@@ -48,3 +48,6 @@ struct EmptyBookingsView: View {
     }
 }
 
+#Preview {
+    EmptyBookingsView(filter: BookingView.BookingFilter.pending)
+}

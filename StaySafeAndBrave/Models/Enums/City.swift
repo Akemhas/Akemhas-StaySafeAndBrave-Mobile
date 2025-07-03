@@ -18,9 +18,13 @@ enum City: String, Codable, CaseIterable, CustomStringConvertible, Identifiable{
     case capetown
     case johannesburg
     case durban
-    case dortmund 
+    case dortmund
     
     var id: String {
         return self.rawValue
+    }
+    
+    static func getDisplayName(for city: String) -> String{
+        return City(rawValue: city)?.description ?? city
     }
 }

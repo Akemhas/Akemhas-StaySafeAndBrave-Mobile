@@ -182,8 +182,8 @@ struct ProfileView: View {
                             .foregroundColor(.secondary)
                         HStack(spacing: 4) {
                             Circle()
-                                .fill(apiConfig.currentEnvironment.isSecure ? .green : .orange)
-                                .frame(width: 6, height: 6)
+                                .fill(apiConfig.isReachable ? .red : apiConfig.currentEnvironment.isSecure ? .green : .yellow)
+                                .frame(width: 10, height: 10)
                             Text(apiConfig.currentEnvironment.isSecure ? "Secure" : "Local")
                                 .font(.caption2)
                                 .foregroundColor(.secondary)

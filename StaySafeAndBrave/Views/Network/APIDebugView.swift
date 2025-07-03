@@ -31,20 +31,6 @@ struct APIDebugView: View {
                     }
                 }
                 .buttonStyle(.bordered)
-                
-                Button("Auto-Detect Environment") {
-                    Task {
-                        await apiConfig.autoDetectEnvironment()
-                    }
-                }
-                .buttonStyle(.bordered)
-                
-                Button("Find Available Environment") {
-                    Task {
-                        await apiConfig.switchToAvailableEnvironment()
-                    }
-                }
-                .buttonStyle(.bordered)
             }
             
             if !testResult.isEmpty {

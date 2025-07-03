@@ -9,52 +9,12 @@ import Foundation
 import Network
 import Combine
 
-enum APIEnvironment: String, CaseIterable {
-    case local = "Local Development"
-    case docker = "Local Docker"
-    case staging = "Staging"
-    case production = "Production"
-    
-    var baseURL: String {
-        switch self {
-        case .local:
-            return "http://127.0.0.1:8080"
-        case .docker:
-            return "http://127.0.0.1:8080"
-        case .staging:
-            return "https://mic-2025-staysafeandbrave.onrender.com"
-        case .production:
-            return "https://mic-2025-staysafeandbrave.onrender.com"
-        }
-    }
-    
-    var description: String {
-        switch self {
-        case .local:
-            return "Local Vapor server (swift run)"
-        case .docker:
-            return "Local Docker container"
-        case .staging:
-            return "Staging server on Render"
-        case .production:
-            return "Production server on Render"
-        }
-    }
-    
-    var isSecure: Bool {
-        return baseURL.hasPrefix("https")
-    }
-    
-    var isLocal: Bool {
-        return self == .local || self == .docker
-    }
-}
-
 class APIConfiguration: ObservableObject {
     static let shared = APIConfiguration()
     
     @Published var currentEnvironment: APIEnvironment = .production
     @Published var isDetecting = false
+    @Published var isReachable = false
     @Published var lastDetectionDate: Date?
     
     private let monitor = NWPathMonitor()
@@ -65,58 +25,18 @@ class APIConfiguration: ObservableObject {
     }
     
     private init() {
-        loadSavedEnvironment()
-        startNetworkMonitoring()
+        currentEnvironment = .local
+        clearSavedEnvironment()
     }
     
     deinit {
         monitor.cancel()
     }
     
-    private func startNetworkMonitoring() {
-        monitor.pathUpdateHandler = { [weak self] path in
-            if path.status == .satisfied {
-                DispatchQueue.main.async {
-                    self?.autoDetectEnvironmentIfNeeded()
-                }
-            }
-        }
-        monitor.start(queue: monitorQueue)
-    }
-    
-    func autoDetectEnvironment() async {
-        await MainActor.run {
-            isDetecting = true
-        }
-        
-        let detectedEnvironment = await performEnvironmentDetection()
-        
-        await MainActor.run {
-            if detectedEnvironment != currentEnvironment {
-                currentEnvironment = detectedEnvironment
-                saveEnvironment()
-            }
-            lastDetectionDate = Date()
-            isDetecting = false
-        }
-    }
-    
-    private func autoDetectEnvironmentIfNeeded() {
-        // Only auto-detect every 30 seconds to avoid spam
-        if let lastDetection = lastDetectionDate,
-           Date().timeIntervalSince(lastDetection) < 30 {
-            return
-        }
-        
-        Task {
-            await autoDetectEnvironment()
-        }
-    }
-    
     private func performEnvironmentDetection() async -> APIEnvironment {
         #if DEBUG
         let isDockerEnvironment = ProcessInfo.processInfo.environment["AUTO_MIGRATE"] != nil
-        let localAvailable = await isServerReachable(url: "http://127.0.0.1:8080")
+        let localAvailable = await isServerReachable(url: "http://localhost:8080")
         
         if localAvailable {
             return isDockerEnvironment ? .docker : .local
@@ -162,7 +82,7 @@ class APIConfiguration: ObservableObject {
     
     func switchTo(_ environment: APIEnvironment, validate: Bool = false) async {
         if validate {
-            let isReachable = await isServerReachable(url: environment.baseURL)
+            isReachable = await isServerReachable(url: environment.baseURL)
             if !isReachable {
                 print("Warning: \(environment.rawValue) server is not reachable")
             }
@@ -171,23 +91,6 @@ class APIConfiguration: ObservableObject {
         await MainActor.run {
             currentEnvironment = environment
             saveEnvironment()
-        }
-    }
-    
-    func switchToAvailableEnvironment() async {
-        let available = await findAvailableEnvironment()
-        await switchTo(available)
-    }
-    
-    func handleAppDidBecomeActive() {
-        Task {
-            await autoDetectEnvironment()
-        }
-    }
-    
-    func handleAppLaunch() {
-        Task {
-            await autoDetectEnvironment()
         }
     }
     
@@ -209,16 +112,10 @@ class APIConfiguration: ObservableObject {
     // Non-async wrapper methods for SwiftUI
     func testCurrentEnvironmentAsync() {
         Task {
-            let isReachable = await testCurrentEnvironment()
+            isReachable = await testCurrentEnvironment()
             await MainActor.run {
                 print("Current environment reachable: \(isReachable)")
             }
-        }
-    }
-    
-    func switchToAvailableEnvironmentAsync() {
-        Task {
-            await switchToAvailableEnvironment()
         }
     }
     
@@ -237,8 +134,8 @@ class APIConfiguration: ObservableObject {
     func serverReachabilityPublisher(for environment: APIEnvironment) -> AnyPublisher<Bool, Never> {
         Future { promise in
             Task {
-                let isReachable = await self.isServerReachable(url: environment.baseURL)
-                promise(.success(isReachable))
+                self.isReachable = await self.isServerReachable(url: environment.baseURL)
+                promise(.success(self.isReachable))
             }
         }
         .eraseToAnyPublisher()
@@ -263,5 +160,9 @@ extension APIConfiguration {
             currentEnvironment = .production
             #endif
         }
+    }
+    
+    func clearSavedEnvironment() {
+        UserDefaults.standard.removeObject(forKey: environmentKey)
     }
 }
